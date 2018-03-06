@@ -1,9 +1,9 @@
-# Exclusive W decays Analysis
-Code for the analysis of exclusive W decays
+# TTHAnalsyis
+Code for the analysis of ttH
 
 ## Setup
    ```
-   git clone git@github.com:abenagli/WExclAnalysis.git
-   cd WExclAnalysis
+   git clone git@github.com:abenagli/TTHAnalsyis.git
+   cd TTHAnalysis
    git submodule update --init --recursive
    ```
