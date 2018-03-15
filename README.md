@@ -6,4 +6,6 @@ Code for the analysis of ttH
    git clone git@github.com:abenagli/TTHAnalsyis.git
    cd TTHAnalysis
    git submodule update --init --recursive
+   make
+   make exe
    ```
