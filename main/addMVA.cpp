@@ -57,19 +57,19 @@ int main(int argc, char** argv)
   TreeVars treeVars;
   InitTreeVars(t,treeVars);
   
-  std::map<std::string,float> varMap;
-  varMap["dipho_leadEta"] = treeVars.dipho_leadEta;
-  varMap["dipho_subleadEta"] = treeVars.dipho_subleadEta;
-  varMap["dipho_lead_ptoM"] = treeVars.dipho_lead_ptoM;
-  varMap["dipho_sublead_ptoM"] = treeVars.dipho_sublead_ptoM;
-  varMap["dipho_leadIDMVA"] = treeVars.dipho_leadIDMVA;
-  varMap["dipho_subleadIDMVA"] = treeVars.dipho_subleadIDMVA;
-  varMap["dipho_lead_sigmaEoE"] = treeVars.dipho_lead_sigmaEoE;
-  varMap["dipho_sublead_sigmaEoE"] = treeVars.dipho_sublead_sigmaEoE;
-  varMap["dipho_sigmaWV"] = treeVars.dipho_sigmaWV;
-  varMap["dipho_vtxProb"] = treeVars.dipho_vtxProb;
-  varMap["dipho_sigmaRV"] = treeVars.dipho_sigmaRV;
-  varMap["dipho_cosDeltaphi"] = treeVars.dipho_cosDeltaphi;
+  std::map<std::string,float*> varMap;
+  varMap["dipho_leadEta"] = &treeVars.dipho_leadEta;
+  varMap["dipho_subleadEta"] = &treeVars.dipho_subleadEta;
+  varMap["dipho_lead_ptoM"] = &treeVars.dipho_lead_ptoM;
+  varMap["dipho_sublead_ptoM"] = &treeVars.dipho_sublead_ptoM;
+  varMap["dipho_leadIDMVA"] = &treeVars.dipho_leadIDMVA;
+  varMap["dipho_subleadIDMVA"] = &treeVars.dipho_subleadIDMVA;
+  varMap["dipho_lead_sigmaEoE"] = &treeVars.dipho_lead_sigmaEoE;
+  varMap["dipho_sublead_sigmaEoE"] = &treeVars.dipho_sublead_sigmaEoE;
+  varMap["dipho_sigmaWV"] = &treeVars.dipho_sigmaWV;
+  varMap["dipho_vtxProb"] = &treeVars.dipho_vtxProb;
+  varMap["dipho_sigmaRV"] = &treeVars.dipho_sigmaRV;
+  varMap["dipho_cosDeltaphi"] = &treeVars.dipho_cosDeltaphi;
   
   
   //---------------
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
     {
       std::string inputVariable = inputVariables.at(jj);
       
-      diphoMVAReaders[diphoMVA_label] -> AddVariable(inputVariable.c_str(),&varMap[diphoMVA_label]);
+      diphoMVAReaders[diphoMVA_label] -> AddVariable(inputVariable.c_str(),varMap[inputVariable.c_str()]);
     }
     
     diphoMVAReaders[diphoMVA_label] -> BookMVA( diphoMVA_methods[diphoMVA_label],weightsFile.c_str() );
@@ -125,7 +125,6 @@ int main(int argc, char** argv)
     t -> GetEntry(ii);
     
     // evaluate dipho MVA                                                       
-    //treeVars.dipho_mva = diphoMVAReader -> EvaluateMVA(diphoMVA_method.c_str());
     for(unsigned int ii = 0; ii < diphoMVA_labels.size(); ++ii)
     {
       std::string diphoMVA_label = diphoMVA_labels.at(ii);
