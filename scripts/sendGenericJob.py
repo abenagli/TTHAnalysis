@@ -69,7 +69,7 @@ for x in range(1, args.nJobs+1):
       fout.write("echo\n")
       fout.write("echo 'START---------------'\n")
       fout.write("echo 'current dir: ' ${PWD}\n")
-      fout.write("cd /afs/cern.ch/work/a/abenagli/HGG/TTH/CMSSW_8_0_28/src/\n")
+      fout.write("cd /afs/cern.ch/work/a/abenagli/HGG/TTH/CMSSW_9_4_5_cand1/src\n")
       fout.write("eval `scramv1 runtime -sh`\n")
       fout.write("cd "+str(args.baseFolder)+"\n")
       fout.write("echo 'current dir: ' ${PWD}\n")

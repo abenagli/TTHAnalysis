@@ -20,7 +20,7 @@ struct TreeVars
   float dipho_vtxProb;
   float dipho_sigmaRV;
   float dipho_sigmaWV;
-  float dipho_deltaphi;
+  //float dipho_deltaphi;
   float dipho_cosDeltaphi;
   float dipho_leadPt;
   float dipho_leadEta;
@@ -39,15 +39,16 @@ struct TreeVars
   float dipho_sublead_sigmaEoE;
   float dipho_subleadIDMVA;
   float dipho_mva;
+  float dipho_mva_training2017_v1;
   
   float MetPt;
   float MetPhi;
   float ttHMVA;
   
-  float nJets;
-  float nJets_bTagLoose;
-  float nJets_bTagMedium;
-  float nJets_bTagTight;
+  /* float nJets; */
+  /* float nJets_bTagLoose; */
+  /* float nJets_bTagMedium; */
+  /* float nJets_bTagTight; */
   
   float jet_pt[9];
   float jet_eta[9];
@@ -58,8 +59,7 @@ struct TreeVars
   float mu_eta[2];
   float mu_phi[2];
   float mu_energy[2];
-  float mu_isLoose[2];
-  float mu_isMedium[2];
+  float mu_IDVector[2][2];
   float mu_miniIso[2];
   float mu_trackIso[2];
   float mu_charge[2];
@@ -71,12 +71,7 @@ struct TreeVars
   float ele_eta[2];
   float ele_phi[2];
   float ele_energy[2];
-  float ele_passVetoId[2];
-  float ele_passLooseId[2];
-  float ele_passMediumId[2];
-  float ele_passTightId[2];
-  float ele_MVAMediumId[2];
-  float ele_MVATightId[2];
+  float ele_IDVector[2][10];
   float ele_miniIso[2];
   float ele_ecalEnergy[2];
   float ele_SCx[2];

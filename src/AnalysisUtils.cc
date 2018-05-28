@@ -24,22 +24,25 @@ float DeltaR(const float& eta1, const float& phi1,
 
 
 
-bool DiMuonSelections(TLorentzVector mu1, TLorentzVector mu2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float Iso1, float Iso2)
+bool DiMuSelections(TLorentzVector mu1, TLorentzVector mu2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float Iso1, float Iso2)
 {
   // if(charge1*charge2!=-1) return 0;
-  if( abs((mu1+mu2).M() - MZ) <5) return 0;
-  if(abs(mu1.Eta())>2.4) return 0;
-  if(abs(mu2.Eta())>2.4) return 0;
   
-  if( DeltaR( ph1.Eta(), ph1.Phi(), mu1.Eta(), mu1.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph1.Eta(), ph1.Phi(), mu2.Eta(), mu2.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), mu1.Eta(), mu1.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), mu2.Eta(), mu2.Phi() ) <0.2 ) return 0;
+  if( std::max(mu1.Pt(),mu2.Pt()) < 25. ) return 0;
+  if( mu1.Pt() < 10 ) return 0;
+  if( mu2.Pt() < 10 ) return 0;
   
-  if( DeltaR( mu1.Eta(), mu1.Phi(), mu2.Eta(), mu2.Phi() ) <0.1 ) return 0;
-  if(std::max(mu1.Pt(), mu2.Pt())<20.) return 0;
-  // if(mu1.Pt()<15) return 0;
-  // if(mu2.Pt()<15) return 0;
+  if( abs(mu1.Eta()) > 2.4 ) return 0;
+  if( abs(mu2.Eta()) > 2.4 ) return 0;
+
+  if( abs((mu1+mu2).M() - MZ) < 5. ) return 0;
+  
+  if( DeltaR( ph1.Eta(), ph1.Phi(), mu1.Eta(), mu1.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph1.Eta(), ph1.Phi(), mu2.Eta(), mu2.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(), mu1.Eta(), mu1.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(), mu2.Eta(), mu2.Phi() ) < 0.2 ) return 0;
+  
+  if( DeltaR( mu1.Eta(), mu1.Phi(), mu2.Eta(), mu2.Phi() ) < 0.1 ) return 0;
   
   // if(Iso1>0.25 || Iso2>0.25) return 0;
   // if(Iso1>0.06 || Iso2>0.06) return 0;
@@ -48,26 +51,32 @@ bool DiMuonSelections(TLorentzVector mu1, TLorentzVector mu2, float charge1, flo
 }
 
 
-bool DiEleSelections(TLorentzVector ele1, TLorentzVector ele2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float miniIso1, float miniIso2, float dTrk1, float dTrk2)
+bool DiEleSelections(TLorentzVector ele1, TLorentzVector ele2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float iso1, float iso2, float dTrk1, float dTrk2)
 {
   // if(charge1*charge2!=-1) return 0;
-  if( abs((ele1+ele2).M() - MZ) <5) return 0;
-  if( DeltaR( ph1.Eta(), ph1.Phi(), ele1.Eta(), ele1.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph1.Eta(), ph1.Phi(), ele2.Eta(), ele2.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), ele1.Eta(), ele1.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), ele2.Eta(), ele2.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ele1.Eta(), ele1.Phi(), ele2.Eta(), ele2.Phi() ) <0.2 ) return 0;
-  if( abs((ph1+ele1).M() - MZ) <5) return 0;
-  if( abs((ph1+ele2).M() - MZ) <5) return 0;
-  if( abs((ph2+ele1).M() - MZ) <5) return 0;
-  if( abs((ph2+ele2).M() - MZ) <5) return 0;
+  
+  if( std::max(ele1.Pt(),ele2.Pt()) < 20. ) return 0;
+  if( ele1.Pt() < 15. ) return 0;
+  if( ele2.Pt() < 15. ) return 0;
+  
   if( abs(ele1.Eta())>2.4 || ( abs(ele1.Eta())>1.4442 && abs(ele1.Eta())<1.556) ) return 0;
   if( abs(ele2.Eta())>2.4 || ( abs(ele2.Eta())>1.4442 && abs(ele2.Eta())<1.556) ) return 0;
   
-  // if((abs(ele1.Eta())<= 1.479 && miniIso1 > 0.045) || (abs(ele1.Eta())> 1.479 && miniIso1 > 0.08)) return 0;
-  // if((abs(ele2.Eta())<= 1.479 && miniIso2 > 0.045) || (abs(ele2.Eta())> 1.479 && miniIso2 > 0.08)) return 0;
+  if( abs((ele1+ele2).M() - MZ) < 5. ) return 0;
+  if( abs((ph1+ele1).M()  - MZ) < 5. ) return 0;
+  if( abs((ph1+ele2).M()  - MZ) < 5. ) return 0;
+  if( abs((ph2+ele1).M()  - MZ) < 5. ) return 0;
+  if( abs((ph2+ele2).M()  - MZ) < 5. ) return 0;
   
-  if(std::max(ele1.Pt(), ele2.Pt())<20.) return 0;
+  if( DeltaR( ph1.Eta(), ph1.Phi(), ele1.Eta(), ele1.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph1.Eta(), ph1.Phi(), ele2.Eta(), ele2.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(), ele1.Eta(), ele1.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(), ele2.Eta(), ele2.Phi() ) < 0.2 ) return 0;
+  
+  if( DeltaR( ele1.Eta(), ele1.Phi(), ele2.Eta(), ele2.Phi() ) < 0.2 ) return 0;
+  
+  // if((abs(ele1.Eta())<= 1.479 && iso1 > 0.045) || (abs(ele1.Eta())> 1.479 && iso1 > 0.08)) return 0;
+  // if((abs(ele2.Eta())<= 1.479 && iso2 > 0.045) || (abs(ele2.Eta())> 1.479 && iso2 > 0.08)) return 0;
   
   // if(dTrk1>0.35) return 0;
   // if(dTrk2>0.35) return 0;
@@ -78,84 +87,59 @@ bool DiEleSelections(TLorentzVector ele1, TLorentzVector ele2, float charge1, fl
 
 bool MixedSelections(TLorentzVector mu, TLorentzVector ele, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2)
 {
-  // if(charge1*charge2!=-1) return 0;
-  if(abs(ele.Eta())>2.4 || (abs(ele.Eta())>1.4442 && abs(ele.Eta())<1.556)) return 0;
-  if(abs(mu.Eta())>2.4) return 0;
+  if( charge1*charge2 != -1 ) return 0;
   
-  if( DeltaR( ph1.Eta(), ph1.Phi(), mu.Eta(), mu.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), mu.Eta(), mu.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph1.Eta(), ph1.Phi(), ele.Eta(), ele.Phi() ) <0.2 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), ele.Eta(), ele.Phi() ) <0.2 ) return 0;
-  if( DeltaR( mu.Eta(), mu.Phi(), ele.Eta(), ele.Phi() ) <0.1 ) return 0;
-  // if(ele.Pt()<15) return 0;
-  // if(mu.Pt()<10) return 0;
-  if(std::max(mu.Pt(), ele.Pt())<15.) return 0;
+  if( ele.Pt() < 10. ) return 0;
+  if( mu.Pt()  < 10. ) return 0;
+  
+  if( abs(ele.Eta()) > 2.4 || (abs(ele.Eta()) > 1.4442 && abs(ele.Eta()) < 1.556) ) return 0;
+  if( abs(mu.Eta()) > 2.4 ) return 0;
+  
+  if( DeltaR( ph1.Eta(), ph1.Phi(),  mu.Eta(),  mu.Phi() ) < 0.1 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(),  mu.Eta(),  mu.Phi() ) < 0.1 ) return 0;
+  if( DeltaR( ph1.Eta(), ph1.Phi(), ele.Eta(), ele.Phi() ) < 0.1 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(), ele.Eta(), ele.Phi() ) < 0.1 ) return 0;
+  
+  if( DeltaR( mu.Eta(), mu.Phi(), ele.Eta(), ele.Phi() ) < 0.1 ) return 0;
   
   return 1;
 }
 
 
-bool SingleMuSelections(TLorentzVector mu1,  TLorentzVector ph1, TLorentzVector ph2, float miniIso)
+bool SingleMuSelections(TLorentzVector mu1,  TLorentzVector ph1, TLorentzVector ph2, float iso)
 {
-  if(mu1.Pt() < 10) return 0;
-  if(abs(mu1.Eta()) > 2.4) return 0;
-  if( DeltaR( ph1.Eta(), ph1.Phi(), mu1.Eta(), mu1.Phi() ) <0.3 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), mu1.Eta(), mu1.Phi() ) <0.3 ) return 0;
+  if( mu1.Pt() < 10. ) return 0;
   
-  if(miniIso > 0.06) return 0;
+  if( abs(mu1.Eta()) > 2.4 ) return 0;
+  
+  if( DeltaR( ph1.Eta(), ph1.Phi(), mu1.Eta(), mu1.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(), mu1.Eta(), mu1.Phi() ) < 0.2 ) return 0;
+  
+  if( iso > 0.1 ) return 0;
   
   return 1;
 }
 
 
-bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float miniIso, float drTrk)
+bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float iso, float drTrk)
 {
-  if(ele1.Pt()<15) return 0;
+  if( ele1.Pt() < 20. ) return 0;
   
-  if( DeltaR( ph1.Eta(), ph1.Phi(), ele1.Eta(), ele1.Phi() ) <0.3 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), ele1.Eta(), ele1.Phi() ) <0.3 ) return 0;
+  if( abs(ele1.Eta()) > 2.4 || ( abs(ele1.Eta()) > 1.4442 && abs(ele1.Eta()) < 1.556 ) )  return 0;
   
-  if( abs((ph1+ele1).M() - MZ) <5) return 0;
-  if( abs((ph2+ele1).M() - MZ) <5) return 0;
-  if(abs(ele1.Eta())>2.4 || ( abs(ele1.Eta())>1.4442 && abs(ele1.Eta())<1.556) )  return 0;
+  if( DeltaR( ph1.Eta(), ph1.Phi(), ele1.Eta(), ele1.Phi() ) < 0.2 ) return 0;
+  if( DeltaR( ph2.Eta(), ph2.Phi(), ele1.Eta(), ele1.Phi() ) < 0.2 ) return 0;
   
-  if((abs(ele1.Eta())<= 1.479 && miniIso > 0.045) || (abs(ele1.Eta())> 1.479 && miniIso > 0.08)) return 0;
+  if( abs((ph1+ele1).M() - MZ) < 5. ) return 0;
+  if( abs((ph2+ele1).M() - MZ) < 5. ) return 0;
   
-  if(drTrk>0.35) return 0;
+  // if((abs(ele1.Eta())<= 1.479 && iso > 0.045) || (abs(ele1.Eta())> 1.479 && iso > 0.08)) return 0;
   
-  return 1;
-}
-
-
-bool SingleMuSelectionsStandard(TLorentzVector mu1, TLorentzVector ph1, TLorentzVector ph2, float miniIso)
-{
-  if(mu1.Pt() < 20) return 0;
-  if(abs(mu1.Eta()) > 2.4) return 0;
-  if( DeltaR( ph1.Eta(), ph1.Phi(), mu1.Eta(), mu1.Phi() ) <0.35 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), mu1.Eta(), mu1.Phi() ) <0.35 ) return 0;
-  if(miniIso > 0.06) return 0;
+  if( drTrk > 0.35 ) return 0;
   
   return 1;
 }
 
-
-bool SingleEleSelectionsStandard(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float miniIso, float drTrk)
-{
-  if(ele1.Pt()<20) return 0;
-  
-  if( DeltaR( ph1.Eta(), ph1.Phi(), ele1.Eta(), ele1.Phi() ) <0.4 ) return 0;
-  if( DeltaR( ph2.Eta(), ph2.Phi(), ele1.Eta(), ele1.Phi() ) <0.4 ) return 0;
-  
-  if( abs((ph1+ele1).M() - MZ) <5) return 0;
-  if( abs((ph2+ele1).M() - MZ) <5) return 0;
-  if(abs(ele1.Eta())>2.4 || ( abs(ele1.Eta())>1.4442 && abs(ele1.Eta())<1.556) )  return 0;
-  
-  if((abs(ele1.Eta())<= 1.479 && miniIso > 0.045) || (abs(ele1.Eta())> 1.479 && miniIso > 0.08)) return 0;
-  
-  if(drTrk>0.35) return 0;
-  
-  return 1;
-}
 
 
 void MakePlot(TH1F** histos, TString title)
@@ -368,17 +352,17 @@ void MakePlot2(std::map<std::string,TH1F*>& histos, TString title)
   histos["VBF"] -> SetLineColor(kViolet - 2);
   histos["VBF"] -> SetFillStyle(0);
   
-  histos["bbH"] -> SetLineWidth(3);			//bbH
-  histos["bbH"] -> SetLineColor(kOrange);
-  histos["bbH"] -> SetFillStyle(0);
+  // histos["bbH"] -> SetLineWidth(3);			//bbH
+  // histos["bbH"] -> SetLineColor(kOrange);
+  // histos["bbH"] -> SetFillStyle(0);
   
-  histos["tHq"] -> SetLineWidth(3);			//tHq
-  histos["tHq"] -> SetLineColor(kAzure + 8);
-  histos["tHq"] -> SetFillStyle(0);
+  // histos["tHq"] -> SetLineWidth(3);			//tHq
+  // histos["tHq"] -> SetLineColor(kAzure + 8);
+  // histos["tHq"] -> SetFillStyle(0);
   
-  histos["tHW"] -> SetLineWidth(3);			//tHW
-  histos["tHW"] -> SetLineColor(kViolet + 2);
-  histos["tHW"] -> SetFillStyle(0);
+  // histos["tHW"] -> SetLineWidth(3);			//tHW
+  // histos["tHW"] -> SetLineColor(kViolet + 2);
+  // histos["tHW"] -> SetFillStyle(0);
   
   
   
@@ -437,17 +421,17 @@ void MakePlot2(std::map<std::string,TH1F*>& histos, TString title)
   signal -> Add(histos["ggH"]);
   signal -> Add(histos["VBF"]);
   signal -> Add(histos["VBF"]);
-  signal -> Add(histos["bbH"]);
-  signal -> Add(histos["tHq"]);
-  signal -> Add(histos["tHW"]);
+  // signal -> Add(histos["bbH"]);
+  // signal -> Add(histos["tHq"]);
+  // signal -> Add(histos["tHW"]);
   
   std::cout << "Tag Purity: ttH " << std::setprecision(2) << histos["ttH"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(2) << histos["ttH"]->Integral() << ") events" << std::endl;
   std::cout << "Tag Purity: ggH " << std::setprecision(2) << histos["ggH"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["ggH"]->Integral() << ") events" << std::endl;
   std::cout << "Tag Purity: VBF " << std::setprecision(2) << histos["VBF"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["VBF"]->Integral() << ") events" << std::endl;
   std::cout << "Tag Purity: VH  " << std::setprecision(2) << histos["VBF"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["VBF"]->Integral() << ") events" << std::endl;
-  std::cout << "Tag Purity: bbH " << std::setprecision(2) << histos["bbH"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["bbH"]->Integral() << ") events" << std::endl;
-  std::cout << "Tag Purity: tHq " << std::setprecision(2) << histos["tHq"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["tHq"]->Integral() << ") events" << std::endl;
-  std::cout << "Tag Purity: tHW " << std::setprecision(2) << histos["tHW"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["tHW"]->Integral() << ") events" << std::endl;
+  // std::cout << "Tag Purity: bbH " << std::setprecision(2) << histos["bbH"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["bbH"]->Integral() << ") events" << std::endl;
+  // std::cout << "Tag Purity: tHq " << std::setprecision(2) << histos["tHq"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["tHq"]->Integral() << ") events" << std::endl;
+  // std::cout << "Tag Purity: tHW " << std::setprecision(2) << histos["tHW"]->Integral()/signal->Integral()*100 << "%, (" << std::setprecision(4) << histos["tHW"]->Integral() << ") events" << std::endl;
   
   
   // histos[9] -> Add(histos[8]);
@@ -469,7 +453,7 @@ void MakePlot2(std::map<std::string,TH1F*>& histos, TString title)
   //	histos[11] -> Draw("histo SAME");
   //	histos[10] -> Draw("histo SAME");
   //	histos[9] -> Draw("histo SAME");
-	//	histos[8] -> Draw("histo SAME");
+  //	histos[8] -> Draw("histo SAME");
   histos[Form("CS_%s",title.Data())] -> Draw("histo,same");
   histos["data"] -> Draw("SAME E1");
   signal -> Draw("histo SAME");
@@ -485,7 +469,7 @@ void MakePlot2(std::map<std::string,TH1F*>& histos, TString title)
 
 
 
-bool OneCategorySelection(const TreeVars& treeVars, const int& type)
+bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection)
 {
   if( type == -2 )
   {
@@ -508,7 +492,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type)
       }
     }
     
-    if( njet >= 3 && jetPtMax > 50. && nbjet_medium >= 1 )
+    if( njet >= 3 && jetPtMax > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
       return true;
     else
       return false;
@@ -525,7 +509,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type)
     ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
     ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
     
-    if(treeVars.mu_isMedium[0] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[0]))
+    if(treeVars.mu_IDVector[0][oneCatMuID] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[0]))
       goodLeptons.push_back(0);
   }
   
@@ -538,7 +522,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type)
     ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
     ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
     
-    if(treeVars.mu_isMedium[1] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[1]))
+    if(treeVars.mu_IDVector[1][oneCatMuID] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[1]))
       goodLeptons.push_back(1);
   }
   
@@ -554,7 +538,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type)
     float dTrk = sqrt(treeVars.ele_dEtaTrk[0]*treeVars.ele_dEtaTrk[0] + treeVars.ele_dPhiTrk[0]*treeVars.ele_dPhiTrk[0]);
     
     bool passSingleEleSelection = SingleEleSelections(ele, ph1, ph2, treeVars.ele_miniIso[0], dTrk);
-    if(treeVars.ele_passLooseId[0] && passSingleEleSelection)
+    if(treeVars.ele_IDVector[0][oneCatEleID] && passSingleEleSelection)
       goodLeptons.push_back(2);
   }
   
@@ -570,7 +554,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type)
     float dTrk = sqrt(treeVars.ele_dEtaTrk[1]*treeVars.ele_dEtaTrk[1] + treeVars.ele_dPhiTrk[1]*treeVars.ele_dPhiTrk[1]);
     
     bool passSingleEleSelection = SingleEleSelections(ele, ph1, ph2, treeVars.ele_miniIso[1], dTrk);
-    if(treeVars.ele_passLooseId[0] && passSingleEleSelection)
+    if(treeVars.ele_IDVector[1][oneCatEleID] && passSingleEleSelection)
       goodLeptons.push_back(3);
   }
   
@@ -606,7 +590,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type)
       }
     }
     
-    if( njet >= 3 && jetPtMax > 50. && nbjet_medium >= 1 )
+    if( njet >= 3 && jetPtMax > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
     {
       accept = true;
       break;
@@ -618,7 +602,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type)
 
 
 
-bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCategories& cat)
+bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat)
 {
   if( type == -2 )
   {
@@ -641,7 +625,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCatego
       }
     }
     
-    if( njet >= 2 && jetPtMax > 50. && nbjet_loose >= 1 )
+    if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && (nbjet_loose >= 2 || nbjet_medium >= 1) ) || (!bTagSelection && nbjet_loose == 0) ) )
       return true;
     else
       return false;
@@ -651,25 +635,25 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCatego
   
   if(treeVars.mu_pt[0]>10.)
   {
-    if(treeVars.mu_isLoose[0])
+    if(treeVars.mu_IDVector[0][diMuFirstID])
       goodLeptons.push_back(0);
   }
       
   if(treeVars.mu_pt[1]>10.)
   {
-    if(treeVars.mu_isLoose[1])
+    if(treeVars.mu_IDVector[1][diMuSecondID])
       goodLeptons.push_back(1);
   }
       
   if(treeVars.ele_pt[0]>10.)
   {
-    if(treeVars.ele_passVetoId[0])
+    if(treeVars.ele_IDVector[0][diEleFirstID])
       goodLeptons.push_back(2);
   }
       
   if(treeVars.ele_pt[1]>10.)
   {
-    if(treeVars.ele_passVetoId[1])
+    if(treeVars.ele_IDVector[1][diEleSecondID])
       goodLeptons.push_back(3);
   }
       
@@ -694,7 +678,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCatego
         //float iso0 = mu_sumChargedHadronPt[0] + max(0., mu_sumNeutralHadronEt[0] + mu_sumPhotonEt[0] - 0.5*mu_sumPUPt[0]);
         //float iso1 = mu_sumChargedHadronPt[1] + max(0., mu_sumNeutralHadronEt[1] + mu_sumPhotonEt[1] - 0.5*mu_sumPUPt[1]);
             
-        bool passDiMuonSelection = DiMuonSelections(mu1, mu2, treeVars.mu_charge[0], treeVars.mu_charge[1], ph1, ph2, treeVars.mu_miniIso[0], treeVars.mu_miniIso[1]);
+        bool passDiMuonSelection = DiMuSelections(mu1, mu2, treeVars.mu_charge[0], treeVars.mu_charge[1], ph1, ph2, treeVars.mu_miniIso[0], treeVars.mu_miniIso[1]);
         if( !passDiMuonSelection ) continue;
             
         std::pair<int,int> leptons(goodLeptons[l1Count],goodLeptons[l2Count]);
@@ -740,7 +724,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCatego
         ele1.SetPtEtaPhiE(treeVars.ele_pt[eleIndex], treeVars.ele_eta[eleIndex], treeVars.ele_phi[eleIndex], treeVars.ele_energy[eleIndex]);
             
         bool passMixedSelection = MixedSelections(mu1, ele1, treeVars.mu_charge[muIndex], treeVars.ele_charge[eleIndex], ph1, ph2);
-        if( !passMixedSelection || !treeVars.mu_isMedium[muIndex] ) continue;
+        if( !passMixedSelection || !treeVars.mu_IDVector[muIndex][mixedMuID] || !treeVars.ele_IDVector[eleIndex][mixedEleID] ) continue;
             
         std::pair<int, int> leptons(goodLeptons[l1Count], goodLeptons[l2Count]);
         selectedPairs.push_back(leptons);
@@ -795,7 +779,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCatego
       }
     }
     
-    if( njet >= 2 && jetPtMax > 50. && nbjet_loose >= 1 )
+    if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && (nbjet_loose >= 2 || nbjet_medium >= 1) ) || (!bTagSelection && nbjet_loose == 0) ) )
     {
       accept = true;
       break;
@@ -807,7 +791,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCatego
 
 
 
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type)
+bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection)
 {
   if( type == -2 )
   {
@@ -830,7 +814,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type)
       }
     }
     
-    if( njet >= 3 && treeVars.jet_pt[0] > 50. && nbjet_medium >= 1 )
+    if( njet >= 3 && treeVars.jet_pt[0] > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
       return true;
     else
       return false;
@@ -847,7 +831,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type)
     ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
     ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
     
-    if(treeVars.mu_isMedium[0] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[0]))
+    if(treeVars.mu_IDVector[0][singleMuID] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[0]))
       goodLeptons.push_back(0);
   }
   
@@ -860,7 +844,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type)
     ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
     ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
     
-    if(treeVars.mu_isMedium[0] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[1]))
+    if(treeVars.mu_IDVector[1][singleMuID] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[1]))
       goodLeptons.push_back(1);
   }
   
@@ -876,7 +860,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type)
     float dTrk = sqrt(treeVars.ele_dEtaTrk[0]*treeVars.ele_dEtaTrk[0] + treeVars.ele_dPhiTrk[0]*treeVars.ele_dPhiTrk[0]);
     
     bool passSingleEleSelection = SingleEleSelections(ele, ph1, ph2, treeVars.ele_miniIso[0], dTrk);
-    if(treeVars.ele_passLooseId[0] && passSingleEleSelection)
+    if(treeVars.ele_IDVector[0][singleEleID] && passSingleEleSelection)
       goodLeptons.push_back(2);
   }
   
@@ -892,7 +876,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type)
     float dTrk = sqrt(treeVars.ele_dEtaTrk[1]*treeVars.ele_dEtaTrk[1] + treeVars.ele_dPhiTrk[1]*treeVars.ele_dPhiTrk[1]);
     
     bool passSingleEleSelection = SingleEleSelections(ele, ph1, ph2, treeVars.ele_miniIso[1], dTrk);
-    if(treeVars.ele_passLooseId[1] && passSingleEleSelection)
+    if(treeVars.ele_IDVector[1][singleEleID] && passSingleEleSelection)
       goodLeptons.push_back(3);
   }
   
@@ -924,7 +908,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type)
       }
     }
     
-    if( njet >= 3 && treeVars.jet_pt[0] > 50. && nbjet_medium >= 1 )
+    if( njet >= 3 && treeVars.jet_pt[0] > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
     {
       accept = true;
       break;
@@ -943,7 +927,7 @@ bool CutBasedSelection(const TreeVars& treeVars,
 {
   if( treeVars.dipho_lead_ptoM < min_lead_ptoM || treeVars.dipho_sublead_ptoM < min_sublead_ptoM ) return false;
   if( treeVars.dipho_leadIDMVA < min_leadIDMVA || treeVars.dipho_subleadIDMVA < min_subleadIDMVA ) return false;
-  if( treeVars.dipho_deltaphi > max_deltaphi ) return false;
+  // if( treeVars.dipho_deltaphi > max_deltaphi ) return false;
   if( fabs( treeVars.dipho_leadEta - treeVars.dipho_subleadEta ) > max_deltaeta ) return false;
   
   return true;

@@ -16,11 +16,24 @@
 #define MZ 91.187
 #define PI 3.14159265359
 
-#define bDiscriminantThresholdLoose  0.5426
-#define bDiscriminantThresholdMedium 0.8484
-#define bDiscriminantThresholdTight  0.9535
+#define bDiscriminantThresholdLoose  0.1522
+#define bDiscriminantThresholdMedium 0.4941
+#define bDiscriminantThresholdTight  0.8001
+
+#define oneCatMuID   1  // 0=Loose, 1=Medium
+#define singleMuID   1  // 0=Loose, 1=Medium
+#define diMuFirstID  1  // 0=Loose, 1=Medium
+#define diMuSecondID 1  // 0=Loose, 1=Medium
+#define oneCatEleID   5 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define singleEleID   5 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define diEleFirstID  4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define diEleSecondID 4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define mixedMuID  1 // 0=Loose, 1=Medium
+#define mixedEleID 4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
 
 enum DiLeptonCategories { None, DiMuon, DiElectron, Mixed };
+
+
 
 float DeltaEta(const float& eta1, const float& eta2);
 
@@ -30,17 +43,15 @@ float DeltaR(const float& eta1, const float& phi1,
              const float& eta2, const float& phi2);
 
 
-bool DiMuonSelections(TLorentzVector mu1, TLorentzVector mu2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float Iso1, float Iso2);
-bool DiEleSelections(TLorentzVector ele1, TLorentzVector ele2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float miniIso1, float miniIso2, float dTrk1, float dTrk2);
+bool DiMuSelections(TLorentzVector mu1, TLorentzVector mu2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float Iso1, float Iso2);
+bool DiEleSelections(TLorentzVector ele1, TLorentzVector ele2, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2, float iso1, float iso2, float dTrk1, float dTrk2);
 bool MixedSelections(TLorentzVector mu, TLorentzVector ele, float charge1, float charge2, TLorentzVector ph1, TLorentzVector ph2);
-bool SingleMuSelections(TLorentzVector mu1,  TLorentzVector ph1, TLorentzVector ph2, float miniIso);
-bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float miniIso, float drTrk);
-bool SingleMuSelectionsStandard(TLorentzVector mu1, TLorentzVector ph1, TLorentzVector ph2, float miniIso);
-bool SingleEleSelectionsStandard(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float miniIso, float drTrk);
+bool SingleMuSelections(TLorentzVector mu1,  TLorentzVector ph1, TLorentzVector ph2, float iso);
+bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float iso, float drTrk);
 
-bool OneCategorySelection(const TreeVars& treeVars, const int& type);
-bool DiLeptonSelection(const TreeVars& treeVars, const int& type, DiLeptonCategories& cat);
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type);
+bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection);
+bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat);
+bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection);
 
 bool CutBasedSelection(const TreeVars& treeVars,
                        const float& min_lead_ptoM, const float& min_sublead_ptoM,

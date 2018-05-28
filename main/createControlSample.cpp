@@ -66,6 +66,15 @@ int main(int argc, char** argv)
   TH1F* h1_data_singleLepton = new TH1F("h1_data_singleLepton","",80,100.,180.);
   TH1F* h1_cs_singleLepton   = new TH1F("h1_cs_singleLepton","",80,100.,180.);
   
+  TH1F* h1_data_oneCategoryNoBTag = new TH1F("h1_data_oneCategoryNoBTag","",80,100.,180.);
+  TH1F* h1_cs_oneCategoryNoBTag   = new TH1F("h1_cs_oneCategoryNoBTag","",80,100.,180.);
+  
+  TH1F* h1_data_diLeptonNoBTag = new TH1F("h1_data_diLeptonNoBTag","",80,100.,180.);
+  TH1F* h1_cs_diLeptonNoBTag   = new TH1F("h1_cs_diLeptonNoBTag","",80,100.,180.);
+  
+  TH1F* h1_data_singleLeptonNoBTag = new TH1F("h1_data_singleLeptonNoBTag","",80,100.,180.);
+  TH1F* h1_cs_singleLeptonNoBTag   = new TH1F("h1_cs_singleLeptonNoBTag","",80,100.,180.);
+  
   for(long int ii = 0; ii < nEntries; ++ii)
   {
     if( ii%1000 == 0 ) std::cout << ">>> Reading entry " << ii << " / " << nEntries << "\r" << std::flush;
@@ -80,11 +89,11 @@ int main(int argc, char** argv)
     //-------------
     // one category
     
-    if( OneCategorySelection(treeVars,-1) == true )
+    if( OneCategorySelection(treeVars,-1,true) == true )
     {
       h1_data_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( OneCategorySelection(treeVars,-2) == true )
+    else if( OneCategorySelection(treeVars,-2,true) == true )
     {
       h1_cs_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -95,11 +104,11 @@ int main(int argc, char** argv)
     // two categories - dilepton
     
     DiLeptonCategories cat;
-    if( DiLeptonSelection(treeVars,-1,cat) == true )
+    if( DiLeptonSelection(treeVars,-1,true,cat) == true )
     {
       h1_data_diLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( DiLeptonSelection(treeVars,-2,cat) == true )
+    else if( DiLeptonSelection(treeVars,-2,true,cat) == true )
     {
       h1_cs_diLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -109,33 +118,104 @@ int main(int argc, char** argv)
     //-------------------------------
     // two categories - single lepton
     
-    if( SingleLeptonSelection(treeVars,-1) == true )
+    if( SingleLeptonSelection(treeVars,-1,true) == true )
     {
       h1_data_singleLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( SingleLeptonSelection(treeVars,-2) == true)
+    else if( SingleLeptonSelection(treeVars,-2,true) == true)
     {
       h1_cs_singleLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
     // two categories - single lepton
+    
+    
+    //-------------
+    // one category
+    
+    if( OneCategorySelection(treeVars,-1,true) == true )
+    {
+      h1_data_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    else if( OneCategorySelection(treeVars,-2,true) == true )
+    {
+      h1_cs_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    // one category
+    
+    
+    
+    //------------------------------------
+    // two categories - dilepton - no bTag
+    
+    if( DiLeptonSelection(treeVars,-1,false,cat) == true )
+    {
+      h1_data_diLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    else if( DiLeptonSelection(treeVars,-2,false,cat) == true )
+    {
+      h1_cs_diLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    // two categories - dilepton - no bTag
+    
+    
+    //-----------------------------------------
+    // two categories - single lepton - no bTag
+    
+    if( SingleLeptonSelection(treeVars,-1,false) == true )
+    {
+      h1_data_singleLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    else if( SingleLeptonSelection(treeVars,-2,false) == true)
+    {
+      h1_cs_singleLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    // two categories - single lepton - no bTag
+    
+    
+    //-----------------------
+    // one category - no bTag
+    
+    if( OneCategorySelection(treeVars,-1,false) == true )
+    {
+      h1_data_oneCategoryNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    else if( OneCategorySelection(treeVars,-2,false) == true )
+    {
+      h1_cs_oneCategoryNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
+    }
+    // one category - no bTag
   }
   
-  float scaleFactor_oneCategory = h1_data_oneCategory->Integral() / h1_cs_oneCategory->Integral();
-  float scaleFactor_diLepton = h1_data_diLepton->Integral() / h1_cs_diLepton->Integral();
+  float scaleFactor_oneCategory  =  h1_data_oneCategory->Integral() /  h1_cs_oneCategory->Integral();
+  float scaleFactor_diLepton     =     h1_data_diLepton->Integral() /     h1_cs_diLepton->Integral();
   float scaleFactor_singleLepton = h1_data_singleLepton->Integral() / h1_cs_singleLepton->Integral();
+  
+  float scaleFactor_oneCategoryNoBTag  =  h1_data_oneCategoryNoBTag->Integral() /  h1_cs_oneCategoryNoBTag->Integral();
+  float scaleFactor_diLeptonNoBTag     =     h1_data_diLeptonNoBTag->Integral() /     h1_cs_diLeptonNoBTag->Integral();
+  float scaleFactor_singleLeptonNoBTag = h1_data_singleLeptonNoBTag->Integral() / h1_cs_singleLeptonNoBTag->Integral();
   
   
   //-------------------------------------------------------
   //--- create a new file + a clone of old tree in new file
+  std::cout << ">>> creating control sample" << std::endl;
+  
   std::string outputFileName = opts.GetOpt<std::string>("Output.outputFileName");
   std::string outputTreeName = opts.GetOpt<std::string>("Output.outputTreeName");
   TFile* outputFile = new TFile(outputFileName.c_str(),"RECREATE");
+
   TTree* outputTree_oneCategory = t->CloneTree(0);
   outputTree_oneCategory -> SetName((outputTreeName+"_oneCategory").c_str());
   TTree* outputTree_diLepton = t->CloneTree(0);
   outputTree_diLepton -> SetName((outputTreeName+"_diLepton").c_str());
   TTree* outputTree_singleLepton = t->CloneTree(0);
   outputTree_singleLepton -> SetName((outputTreeName+"_singleLepton").c_str());
+  
+  TTree* outputTree_oneCategoryNoBTag = t->CloneTree(0);
+  outputTree_oneCategoryNoBTag -> SetName((outputTreeName+"_oneCategoryNoBTag").c_str());
+  TTree* outputTree_diLeptonNoBTag = t->CloneTree(0);
+  outputTree_diLeptonNoBTag -> SetName((outputTreeName+"_diLeptonNoBTag").c_str());
+  TTree* outputTree_singleLeptonNoBTag = t->CloneTree(0);
+  outputTree_singleLeptonNoBTag -> SetName((outputTreeName+"_singleLeptonNoBTag").c_str());
   
   for(long int ii = 0; ii < nEntries; ++ii)
   {
@@ -144,23 +224,41 @@ int main(int argc, char** argv)
     
     float oldWeight = treeVars.weight;
     
-    if( OneCategorySelection(treeVars,-1) == false && OneCategorySelection(treeVars,-2) == true )
+    if( OneCategorySelection(treeVars,-1,true) == false && OneCategorySelection(treeVars,-2,true) == true )
     {
       treeVars.weight = oldWeight * scaleFactor_oneCategory;
       outputTree_oneCategory -> Fill();
     }
     
     DiLeptonCategories cat;
-    if( DiLeptonSelection(treeVars,-1,cat) == false && DiLeptonSelection(treeVars,-2,cat) == true )
+    if( DiLeptonSelection(treeVars,-1,true,cat) == false && DiLeptonSelection(treeVars,-2,true,cat) == true )
     {
       treeVars.weight = oldWeight * scaleFactor_diLepton;
       outputTree_diLepton -> Fill();
     }
     
-    if( SingleLeptonSelection(treeVars,-1) == false && SingleLeptonSelection(treeVars,-2) == true )
+    if( SingleLeptonSelection(treeVars,-1,true) == false && SingleLeptonSelection(treeVars,-2,true) == true )
     {
       treeVars.weight = oldWeight * scaleFactor_singleLepton;
       outputTree_singleLepton -> Fill();
+    }
+    
+    if( OneCategorySelection(treeVars,-1,false) == false && OneCategorySelection(treeVars,-2,false) == true )
+    {
+      treeVars.weight = oldWeight * scaleFactor_oneCategoryNoBTag;
+      outputTree_oneCategoryNoBTag -> Fill();
+    }
+    
+    if( DiLeptonSelection(treeVars,-1,false,cat) == false && DiLeptonSelection(treeVars,-2,false,cat) == true )
+    {
+      treeVars.weight = oldWeight * scaleFactor_diLeptonNoBTag;
+      outputTree_diLeptonNoBTag -> Fill();
+    }
+    
+    if( SingleLeptonSelection(treeVars,-1,false) == false && SingleLeptonSelection(treeVars,-2,false) == true )
+    {
+      treeVars.weight = oldWeight * scaleFactor_singleLeptonNoBTag;
+      outputTree_singleLeptonNoBTag -> Fill();
     }
   }
   
@@ -168,12 +266,23 @@ int main(int argc, char** argv)
   outputTree_diLepton -> AutoSave();
   outputTree_singleLepton -> AutoSave();
   
+  outputTree_oneCategoryNoBTag -> AutoSave();
+  outputTree_diLeptonNoBTag -> AutoSave();
+  outputTree_singleLeptonNoBTag -> AutoSave();
+  
   h1_data_oneCategory  -> Write();
   h1_cs_oneCategory    -> Write();
   h1_data_diLepton     -> Write();
   h1_cs_diLepton       -> Write();
   h1_data_singleLepton -> Write();
   h1_cs_singleLepton   -> Write();
+  
+  h1_data_oneCategoryNoBTag  -> Write();
+  h1_cs_oneCategoryNoBTag    -> Write();
+  h1_data_diLeptonNoBTag     -> Write();
+  h1_cs_diLeptonNoBTag       -> Write();
+  h1_data_singleLeptonNoBTag -> Write();
+  h1_cs_singleLeptonNoBTag   -> Write();
      
   outputFile -> Close();
   

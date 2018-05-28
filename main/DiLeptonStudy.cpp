@@ -42,7 +42,7 @@ using namespace RooFit;
 
 bool cutBased = false;
 
-float lumi = 35.9;
+float lumi = 41.7;
 
 int jetThreshold = 2;
 int bjetThreshold = 1;
@@ -100,6 +100,18 @@ int main(int argc, char* argv[])
   RooDataSet dataSingleLepton("dataSingleLepton","dataSingleLepton", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
   RooDataSet csSingleLepton("csSingleLepton","csSingleLepton", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
   RooDataSet tthSingleLepton("tthSingleLepton","tthSingleLepton", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  
+  RooDataSet dataOneCatNoBTag("dataOneCatNoBTag","dataOneCatNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  RooDataSet csOneCatNoBTag("csOneCatNoBTag","csOneCatNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  RooDataSet tthOneCatNoBTag("tthOneCatNoBTag","tthOneCatNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  
+  RooDataSet dataDiLeptonNoBTag("dataDiLeptonNoBTag","dataDiLeptonNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  RooDataSet csDiLeptonNoBTag("csDiLeptonNoBTag","csDiLeptonNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  RooDataSet tthDiLeptonNoBTag("tthDiLeptonNoBTag","tthDiLeptonNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  
+  RooDataSet dataSingleLeptonNoBTag("dataSingleLeptonNoBTag","dataSingleLeptonNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  RooDataSet csSingleLeptonNoBTag("csSingleLeptonNoBTag","csSingleLeptonNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
+  RooDataSet tthSingleLeptonNoBTag("tthSingleLeptonNoBTag","tthSingleLeptonNoBTag", RooArgSet(mass_, weight_, mva_), WeightVar(weight_));
   
   
   //------------------
@@ -171,15 +183,19 @@ int main(int argc, char* argv[])
     TFile* outFile = TFile::Open(Form("%s/plotTree_%s.root",outputPlotFolder.c_str(),label.c_str()),"RECREATE");
     outFile -> cd();
     TTree* outTree_2jets = new TTree("plotTree_2jets","plotTree_2jets");
-    TTree* outTree_2jets_1bTagLoose = new TTree("plotTree_2jets_1bTagLoose","plotTree_2jets_1bTagLoose");
     TTree* outTree_diLepton = new TTree("plotTree_diLepton","plotTree_diLepton");
     TTree* outTree_singleLepton = new TTree("plotTree_singleLepton","plotTree_singleLepton");
     TTree* outTree_oneCategory = new TTree("plotTree_oneCategory","plotTree_oneCategory");
+    TTree* outTree_diLepton_noBTag = new TTree("plotTree_diLepton_noBTag","plotTree_diLepton_noBTag");
+    TTree* outTree_singleLepton_noBTag = new TTree("plotTree_singleLepton_noBTag","plotTree_singleLepton_noBTag");
+    TTree* outTree_oneCategory_noBTag = new TTree("plotTree_oneCategory_noBTag","plotTree_oneCategory_noBTag");
     InitOutTreeVars(outTree_2jets,treeVars);
-    InitOutTreeVars(outTree_2jets_1bTagLoose,treeVars);
     InitOutTreeVars(outTree_diLepton,treeVars);
     InitOutTreeVars(outTree_singleLepton,treeVars);
     InitOutTreeVars(outTree_oneCategory,treeVars);
+    InitOutTreeVars(outTree_diLepton_noBTag,treeVars);
+    InitOutTreeVars(outTree_singleLepton_noBTag,treeVars);
+    InitOutTreeVars(outTree_oneCategory_noBTag,treeVars);
     
     
     int nEntries = tree->GetEntries();
@@ -193,14 +209,14 @@ int main(int argc, char* argv[])
       if( type == -1 && treeVars.dipho_mass > 115 && treeVars.dipho_mass < 135 ) continue;
       bool passCutBased = CutBasedSelection(treeVars,0.4,0.3,0.,-0.5,2.5,2.);
       
-      if( treeVars.nJets < 2 ) continue;
+      int nJets = 0;
+      for(int jIndex=0; jIndex<6; jIndex++)
+        if(treeVars.jet_pt[jIndex]>25. && abs(treeVars.jet_eta[jIndex])<2.4)
+          ++nJets;
+      
+      if( nJets < 2 ) continue;
       
       outTree_2jets -> Fill();
-      
-      if( treeVars.nJets_bTagLoose < 1 ) continue;
-      
-      outTree_2jets_1bTagLoose -> Fill();
-      
       
       // fill event counters - cut based
         if( type == 1 )
@@ -227,7 +243,7 @@ int main(int argc, char* argv[])
         }
         
         // if( treeVars.dipho_mva_new > mvaCut )
-        if( treeVars.dipho_mva > mvaCut )
+        if( treeVars.dipho_mva_training2017_v1 > mvaCut )
         {
           if( type == 1 )
             nEvents_mvaCut_new["bkg"][mvaCut] += treeVars.weight;
@@ -242,14 +258,14 @@ int main(int argc, char* argv[])
       
       //-------------
       // one category
-      
-      if( OneCategorySelection(treeVars,type) == true )
+      bool bTagSelection = true;
+      if( OneCategorySelection(treeVars,type,bTagSelection) == true )
       {
         mass_oneCat_histo[label] -> Fill(treeVars.dipho_mass, treeVars.weight*lumiFactor);
         
         mass_ = treeVars.dipho_mass;
         // mva_ = treeVars.dipho_mva_new;
-        mva_ = treeVars.dipho_mva;
+        mva_ = treeVars.dipho_mva_training2017_v1;
         if( label == "ttH"            ) tthOneCat.add(RooArgSet(mass_,mva_),  treeVars.weight*lumiFactor);
         if( label == "CS_oneCategory" ) csOneCat.add(RooArgSet(mass_,mva_),   treeVars.weight*lumiFactor);
         if( label == "data"           ) dataOneCat.add(RooArgSet(mass_,mva_), treeVars.weight*lumiFactor);
@@ -262,13 +278,13 @@ int main(int argc, char* argv[])
       // two categories - dilepton
       
       DiLeptonCategories cat = None;
-      if( DiLeptonSelection(treeVars,type,cat) )
+      if( DiLeptonSelection(treeVars,type,bTagSelection,cat) )
       {
         mass_diLepton_histo[label] -> Fill(treeVars.dipho_mass, treeVars.weight*lumiFactor);
         
         mass_ = treeVars.dipho_mass;
         // mva_ = treeVars.dipho_mva_new;
-        mva_ = treeVars.dipho_mva;
+        mva_ = treeVars.dipho_mva_training2017_v1;
         if( label == "ttH"         ) tthDiLepton.add(RooArgSet(mass_,mva_),  treeVars.weight*lumiFactor);
         if( label == "CS_diLepton" ) csDiLepton.add(RooArgSet(mass_,mva_),   treeVars.weight*lumiFactor);
         if( label == "data"        ) dataDiLepton.add(RooArgSet(mass_,mva_), treeVars.weight*lumiFactor);
@@ -282,13 +298,13 @@ int main(int argc, char* argv[])
       //-------------------------------
       // two categories - single lepton
       
-      if( SingleLeptonSelection(treeVars,type) )
+      if( SingleLeptonSelection(treeVars,type,bTagSelection) )
       {
         mass_singleLepton_histo[label] -> Fill(treeVars.dipho_mass, treeVars.weight*lumiFactor);
         
         mass_ = treeVars.dipho_mass;
         // mva_ = treeVars.dipho_mva_new;
-        mva_ = treeVars.dipho_mva;
+        mva_ = treeVars.dipho_mva_training2017_v1;
         if( label == "ttH"             ) tthSingleLepton.add(RooArgSet(mass_,mva_),  treeVars.weight*lumiFactor);
         if( label == "CS_singleLepton" ) csSingleLepton.add(RooArgSet(mass_,mva_),   treeVars.weight*lumiFactor);
         if( label == "data"            ) dataSingleLepton.add(RooArgSet(mass_,mva_), treeVars.weight*lumiFactor);
@@ -300,10 +316,12 @@ int main(int argc, char* argv[])
     } // loop over events
 
     outTree_2jets -> AutoSave();
-    outTree_2jets_1bTagLoose -> AutoSave();
     outTree_diLepton -> AutoSave();
     outTree_singleLepton -> AutoSave();
     outTree_oneCategory -> AutoSave();
+    outTree_diLepton_noBTag -> AutoSave();
+    outTree_singleLepton_noBTag -> AutoSave();
+    outTree_oneCategory_noBTag -> AutoSave();
     outFile -> Close();
     
     std::cout << "Processed tag " << label << ", " << nEntries << " events out of " << nEntries << std::endl;
@@ -318,8 +336,8 @@ int main(int argc, char* argv[])
   MakePlot2(mass_singleLepton_histo, "singleLepton");
   
   
-  system("mv *.png ~/www/ttH/DiLeptonStudy_new/");
-  system("mv *.pdf ~/www/ttH/DiLeptonStudy_new/");
+  system("mv *.png ~/www/ttH/DiLeptonStudy_2017/");
+  system("mv *.pdf ~/www/ttH/DiLeptonStudy_2017/");
   
   
   
@@ -356,9 +374,12 @@ int main(int argc, char* argv[])
     float diLeptonSignificance = makeFits(&tthDiLepton, &csDiLepton, -1., "DiLepton", 0, 0, 0);
     float singleLeptonSignificance = makeFits(&tthSingleLepton, &csSingleLepton, -1., "SingleLepton", 0, 0, 0);
     
-    float purityOneCat = (mass_oneCat_histo["ttH"] -> Integral() / (mass_oneCat_histo["ttH"]->Integral() + mass_oneCat_histo["ggH"]->Integral() + mass_oneCat_histo["VBF"]->Integral() + mass_oneCat_histo["VH"]->Integral() + mass_oneCat_histo["bbH"]->Integral() + mass_oneCat_histo["tHq"]->Integral() + mass_oneCat_histo["tHW"]->Integral() ) )*100.;
-    float purityDiLepton = (mass_diLepton_histo["ttH"] -> Integral() / (mass_diLepton_histo["ttH"]->Integral() + mass_diLepton_histo["ggH"]->Integral() + mass_diLepton_histo["VBF"]->Integral() + mass_diLepton_histo["VH"]->Integral() + mass_diLepton_histo["bbH"]->Integral() + mass_diLepton_histo["tHq"]->Integral() + mass_diLepton_histo["tHW"]->Integral() ) )*100.;
-    float puritySingleLepton = (mass_singleLepton_histo["ttH"] -> Integral() / (mass_singleLepton_histo["ttH"]->Integral() + mass_singleLepton_histo["ggH"]->Integral() + mass_singleLepton_histo["VBF"]->Integral() + mass_singleLepton_histo["VH"]->Integral() + mass_singleLepton_histo["bbH"]->Integral() + mass_singleLepton_histo["tHq"]->Integral() + mass_singleLepton_histo["tHW"]->Integral() ) )*100.;
+    // float purityOneCat = (mass_oneCat_histo["ttH"] -> Integral() / (mass_oneCat_histo["ttH"]->Integral() + mass_oneCat_histo["ggH"]->Integral() + mass_oneCat_histo["VBF"]->Integral() + mass_oneCat_histo["VH"]->Integral() + mass_oneCat_histo["bbH"]->Integral() + mass_oneCat_histo["tHq"]->Integral() + mass_oneCat_histo["tHW"]->Integral() ) )*100.;
+    // float purityDiLepton = (mass_diLepton_histo["ttH"] -> Integral() / (mass_diLepton_histo["ttH"]->Integral() + mass_diLepton_histo["ggH"]->Integral() + mass_diLepton_histo["VBF"]->Integral() + mass_diLepton_histo["VH"]->Integral() + mass_diLepton_histo["bbH"]->Integral() + mass_diLepton_histo["tHq"]->Integral() + mass_diLepton_histo["tHW"]->Integral() ) )*100.;
+    // float puritySingleLepton = (mass_singleLepton_histo["ttH"] -> Integral() / (mass_singleLepton_histo["ttH"]->Integral() + mass_singleLepton_histo["ggH"]->Integral() + mass_singleLepton_histo["VBF"]->Integral() + mass_singleLepton_histo["VH"]->Integral() + mass_singleLepton_histo["bbH"]->Integral() + mass_singleLepton_histo["tHq"]->Integral() + mass_singleLepton_histo["tHW"]->Integral() ) )*100.;
+    float purityOneCat = (mass_oneCat_histo["ttH"] -> Integral() / (mass_oneCat_histo["ttH"]->Integral() + mass_oneCat_histo["ggH"]->Integral() + mass_oneCat_histo["VBF"]->Integral() + mass_oneCat_histo["VH"]->Integral() ) )*100.;
+    float purityDiLepton = (mass_diLepton_histo["ttH"] -> Integral() / (mass_diLepton_histo["ttH"]->Integral() + mass_diLepton_histo["ggH"]->Integral() + mass_diLepton_histo["VBF"]->Integral() + mass_diLepton_histo["VH"]->Integral() ) )*100.;
+    float puritySingleLepton = (mass_singleLepton_histo["ttH"] -> Integral() / (mass_singleLepton_histo["ttH"]->Integral() + mass_singleLepton_histo["ggH"]->Integral() + mass_singleLepton_histo["VBF"]->Integral() + mass_singleLepton_histo["VH"]->Integral() ) )*100.;
     
     std::cout << "#################################################################################" << std::endl;
     std::cout << "################################## FIT RESULTS ##################################" << std::endl;
@@ -500,7 +521,7 @@ int main(int argc, char* argv[])
       c -> SaveAs("c_eff_vs_mva_singleLepton.pdf");
     }
     
-    system("mv *.png ~/www/ttH/DiLeptonStudy_new/Optimization/");
-    system("mv *.pdf ~/www/ttH/DiLeptonStudy_new/Optimization/");
+    system("mv *.png ~/www/ttH/DiLeptonStudy_2017/Optimization/");
+    system("mv *.pdf ~/www/ttH/DiLeptonStudy_2017/Optimization/");
   }
 }
