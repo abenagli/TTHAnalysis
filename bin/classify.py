@@ -52,7 +52,9 @@ def main(o,args):
         atype=str(o.type)
     factory = TMVA.Factory( "TMVAClassification", outputFile, 
                             "!V:!Silent:!Color:!DrawProgressBar:Transformations=I:AnalysisType=%s" % atype )
-
+    
+    dataloader = TMVA.DataLoader("dataset")
+    
     # Set verbosity
     factory.SetVerbose( o.verbose )
     
@@ -63,7 +65,7 @@ def main(o,args):
         o.variables = [ v.lstrip().rstrip() for v in o.variables.split(":") if v != "" ]
     allvars = ""
     for v in o.variables:
-        factory.AddVariable( str(v) )
+        dataloader.AddVariable( str(v) )
         if allvars != "": allvars += ":"
         allvars += v.split(":=")[0].lstrip(" ").rstrip(" ")
     #print "variables %s" % allvars
@@ -71,7 +73,7 @@ def main(o,args):
     #print o.spectators
     for s in o.spectators:
         if not s in o.variables:
-            factory.AddSpectator( str(s) )
+            dataloader.AddSpectator( str(s) )
 
     # categories and sub categories   
     categories = []
@@ -125,18 +127,18 @@ def main(o,args):
             for s in o.commonCuts:
                 cut = cut+" * ("+str(s)+")"
             tcut=TCut(cut)
-            factory.AddTree( chain, str(evclass), float(weight), tcut, int(ttype) )
+            dataloader.AddTree( chain, str(evclass), float(weight), tcut, int(ttype) )
         # weights
         if "weight" in info:
             weight = info["weight"]
-            factory.AddSpectator( str("%s_wei := %s" % (evclass,weight)) )
+            dataloader.AddSpectator( str("%s_wei := %s" % (evclass,weight)) )
             factory.SetWeightExpression( str(weight), str(evclass) )
         else:
             factory.SetWeightExpression( "1.", str(evclass) )
 
     # "SplitMode=Random" means that the input events are randomly shuffled before
     # splitting them into training and test samples
-    factory.PrepareTrainingAndTestTree( TCut(""),
+    dataloader.PrepareTrainingAndTestTree( TCut(""),
                                         "SplitMode=Random:NormMode=NumEvents:!V" )
     
     # --------------------------------------------------------------------------------------------------
@@ -148,7 +150,7 @@ def main(o,args):
                         }
     if "FisherD" in o.methods:
         mname =  "FisherD%s" % o.label
-        fcats = factory.BookMethod( TMVA.Types.kCategory, mname )
+        fcats = factory.BookMethod( dataloader, TMVA.Types.kCategory, mname )
         
         for cut,name,vars in categories:        
             print "booking sub-category classifier : %s %s %s" % ( cut, name, vars )
@@ -159,7 +161,7 @@ def main(o,args):
 
     if "Fisher" in o.methods:
         mname =  "Fisher%s" % o.label
-        fcats = factory.BookMethod( TMVA.Types.kCategory, TString(mname) )
+        fcats = factory.BookMethod( dataloader, TMVA.Types.kCategory, TString(mname) )
         
         for cut,name,vars in categories:        
             print "booking sub-category classifier : %s %s %s" % ( cut, name, vars )
@@ -170,7 +172,7 @@ def main(o,args):
 
     if "Likelihood" in o.methods:
         mname =  "Likelihood%s" % o.label
-        fcats = factory.BookMethod( TMVA.Types.kCategory, mname )
+        fcats = factory.BookMethod( dataloader, TMVA.Types.kCategory, mname )
         
         for cut,name,vars in categories:        
             print "booking sub-category classifier : %s %s %s" % ( cut, name, vars )
@@ -181,7 +183,7 @@ def main(o,args):
 
     if "LikelihoodD" in o.methods:
         mname =  "LikelihoodD%s" % o.label
-        fcats = factory.BookMethod( TMVA.Types.kCategory, mname )
+        fcats = factory.BookMethod( dataloader, TMVA.Types.kCategory, mname )
         
         for cut,name,vars in categories:        
             print "booking sub-category classifier : %s %s %s" % ( cut, name, vars )
@@ -197,13 +199,13 @@ def main(o,args):
             settings = str(o.settings["BDT"])
         if len(categories) == 0:
             print "booking method %s with settings %s" % ( TMVA.Types.kBDT, settings )
-            cats = factory.BookMethod(TMVA.Types.kBDT,TString(mname),settings)
+            cats = factory.BookMethod( dataloader, TMVA.Types.kBDT,TString(mname),settings)
         else:
-            cats = factory.BookMethod( TMVA.Types.kCategory, mname)
+            cats = factory.BookMethod( dataloader,  TMVA.Types.kCategory, mname)
             
             for cut,name,vars in categories:
                 print "booking sub-category classifier : %s %s %s" % ( cut, name, vars )
-                cats.AddMethod(cut,vars,TMVA.Types.kBDT,"%s_%s" % (mname,name),settings)
+                cats.AddMethod(cut,vars,TMVA.Types.kBDT,"%s_%s" % (mname,name), settings )
     
     if "Cuts" in o.methods:
         mname =  "Cuts%s" % o.label
@@ -211,9 +213,9 @@ def main(o,args):
         if hasattr(o,"settings") and "Cuts" in o.settings:
             settings = str(o.settings["Cuts"])
         if len(categories) == 0:
-            cats = factory.BookMethod(TMVA.Types.kCuts,mname,settings)
+            cats = factory.BookMethod( dataloader, TMVA.Types.kCuts, mname, settings )
         else:
-            cats = factory.BookMethod( TMVA.Types.kCategory, mname)
+            cats = factory.BookMethod( dataloader, TMVA.Types.kCategory, mname )
             
             for cut,name,vars in categories:
                 print "booking sub-category classifier : %s %s %s" % ( cut, name, vars )

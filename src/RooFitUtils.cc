@@ -6,13 +6,13 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
 {
   float significance = -1;
   
-  TCut mvaCut = Form("mva_ > %f && mass_ > 110",mvaMin);
+  TCut mvaCut = Form("mva_ > %f && mass_ > 100",mvaMin);
   RooDataSet* tth_red = (RooDataSet*)tth->reduce(mvaCut);
   RooDataSet* cs_red  = (RooDataSet*)cs->reduce(mvaCut);
   
   RooWorkspace work("work");
   
-  work.factory("mass_[110, 180]");
+  work.factory("mass_[100, 180]");
   work.factory("mean1[125., 123., 127.]");
   work.factory("mean2[125., 123., 127.]");
   work.factory("mean3[125., 123., 127.]");
@@ -27,11 +27,16 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   work.factory("SUM::signalz(frac1[0., 1.]*gauss1,gauss2)");
   work.factory("SUM::signal(frac1[0., 1.]*gauss3, signalz)");
   
+  work.var("mass_") -> setRange("low", 100., 121. );
+  work.var("mass_") -> setRange("cen", 110., 140. );
+  work.var("mass_") -> setRange("hig", 129., 180. );
+  
+  
   if(usePowerLaw)
   {
     RooRealVar x0("x0", "x0", 0, 10000); 
     RooRealVar x1("x1", "x1", -100, -0.001); 
-    RooRealVar mass_("mass_", "mass_", 110, 180); 
+    RooRealVar mass_("mass_", "mass_", 100, 180); 
     RooAbsPdf* bkg = RooClassFactory::makePdfInstance("bkg", "x0*pow(mass_, x1)", RooArgSet(mass_, x0, x1));
     work.import(*bkg);
   }
@@ -44,8 +49,8 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   
   else
   {
-    work.factory("lambda1[-0.3, -10., 0.]");
-    work.factory("lambda2[-0.3, -10., 0.]");
+    work.factory("lambda1[-0.050, -10., 0.]");
+    work.factory("lambda2[-0.-15, -10., 0.]");
     work.factory("Exponential::exp1(mass_, lambda1)");
     work.factory("Exponential::exp2(mass_, lambda2)");
     work.factory("SUM::bkg(frac[0., 1.]*exp1, exp2)");
@@ -56,7 +61,13 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   work.var("bkg_ev")->setVal(cs_red->sumEntries());
   
   work.pdf("signal")->fitTo(*tth_red, Range(110., 140.), SumW2Error(kTRUE), PrintLevel(-1), RooFit::Minimizer("Minuit2","Migrad"));
-  work.pdf("bkg")->fitTo(*cs_red, Range(110., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit2","Migrad"));
+  work.pdf("bkg")->fitTo(*cs_red, Range(100., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit2","Migrad"));
+  // work.pdf("bkg")->fitTo(*cs_red, Range("low,hig"), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit2","Migrad"));
+  
+  RooAbsReal* intSig = work.pdf("signal") -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"cen");
+  RooAbsReal* intBkg = work.pdf("bkg")    -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"cen");
+  std::cout << ">>>>>>     Signal in 120-130 GeV: " << intSig->getVal()*work.var("tth_ev")->getVal() << " (" << intSig->getVal()*work.var("tth_ev")->getVal()/30. << " ev/GeV)" << endl;
+  std::cout << ">>>>>> Background in 120-130 GeV: " << intBkg->getVal()*work.var("bkg_ev")->getVal() << " (" << intBkg->getVal()*work.var("bkg_ev")->getVal()/30. << " ev/GeV)" << endl;
   
   work.defineSet("poi", "tth_ev");
   
@@ -68,11 +79,11 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   c3 -> cd();
   
   RooPlot* massbkg_frame = work.var("mass_")->frame();
-  cs_red -> plotOn(massbkg_frame, Binning(70));
+  cs_red -> plotOn(massbkg_frame, Binning(80));
   work.pdf("bkg")->plotOn(massbkg_frame);
   massbkg_frame -> SetTitle("m_{#gamma#gamma} background");
   massbkg_frame -> Draw();
-  std::string title_ = ("Bkg_" + title + std::to_string(i) + "_mvaMin" + std::to_string(mvaMin)).c_str();
+  std::string title_ = ("Bkg_" + title + std::to_string(i) + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
   
   c3 -> SaveAs((TString)("c_" +title_ + ".png"));
   c3 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -80,11 +91,11 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   TCanvas* c4 = new TCanvas("c4", "c4");
   c4 -> cd();
   RooPlot* masssignal_frame = work.var("mass_")->frame();
-  tth_red -> plotOn(masssignal_frame, Binning(70));
+  tth_red -> plotOn(masssignal_frame, Binning(80));
   work.pdf("signal")->plotOn(masssignal_frame);
   masssignal_frame -> SetTitle("m_{#gamma#gamma} signal");
   masssignal_frame -> Draw();
-  title_ = ("Signal" + title + std::to_string(i) + "_mvaMin" + std::to_string(mvaMin)).c_str();
+  title_ = ("Signal" + title + std::to_string(i) + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
   
   c4 -> SaveAs((TString)("c_" +title_ + ".png"));
   c4 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -94,12 +105,12 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   c5 -> cd();
   
   RooPlot* massfit_frame = work.var("mass_")->frame();
-  data.plotOn(massfit_frame, Binning(70));
+  data.plotOn(massfit_frame, Binning(80));
   work.pdf("model")->plotOn(massfit_frame);
   work.pdf("model")->plotOn(massfit_frame, Components(*work.pdf("bkg")), LineStyle(kDashed));
   massfit_frame -> SetTitle("m_{#gamma#gamma} signal+background");
   massfit_frame -> Draw();
-  title_ = ("SignalBkg" + title + std::to_string(i) + "_mvaMin" + std::to_string(mvaMin)).c_str();
+  title_ = ("SignalBkg" + title + std::to_string(i) + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
   
   c5 -> SaveAs((TString)("c_" +title_ + ".png"));
   c5 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -124,7 +135,7 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   leg3 -> AddEntry("l1", "Signal + bkg", "l");
   leg3 -> AddEntry("l2", "bkg only", "l");
   leg3 -> Draw();
-  title_ = ("Asimov" + title + std::to_string(i) + "_mvaMin" + std::to_string(mvaMin)).c_str();
+  title_ = ("Asimov" + title + std::to_string(i) + "_mvaMin" + Form("%.2f",mvaMin)).c_str();
   
   c6 -> SaveAs((TString)("c_" +title_ + ".png"));
   c6 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -132,7 +143,7 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   delete c6;
   
   //Just a little check!!!                                                                                                                                                                                             
-  work.pdf("model")->fitTo(*asimov, Range(110., 180.), SumW2Error(kFALSE), PrintLevel(-1), RooFit::Minimizer("Minuit2","Migrad"));
+  work.pdf("model")->fitTo(*asimov, Range(100., 180.), SumW2Error(kFALSE), PrintLevel(-1), RooFit::Minimizer("Minuit2","Migrad"));
   // cout << "Signal events from fit: " << work.var("tth_ev")->getVal() << ", true number of events: "<< tth_red->sumEntries() << endl;
   // cout << "Bkg events from fit: " << work.var("bkg_ev")->getVal() << ", true number of events: " << cs_red->sumEntries() << endl;
   
@@ -150,9 +161,8 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   else
   {
     // cout << "Significance = " << hypo->Significance() << endl;
-    
-    work.var("mass_") -> setRange("Integral", 120., 130. ) ;
-    RooAbsReal* intPdf = work.pdf("model")-> createIntegral(*(work.var("mass_")), *(work.var("mass_")), "Integral");
+    // work.var("mass_") -> setRange("Integral", 120., 130. ) ;
+    // RooAbsReal* intPdf = work.pdf("model")-> createIntegral(*(work.var("mass_")), *(work.var("mass_")), "Integral");
     // cout << "Background in 120-130 GeV: " << intPdf->getVal()*work.var("bkg_ev")->getVal() << " (" << intPdf->getVal()*work.var("bkg_ev")->getVal()/10. << " ev/GeV)" << endl;
     
     significance = hypo->Significance();
@@ -171,7 +181,7 @@ float makeFitSimulataneous(RooDataSet* tth1, RooDataSet* ds1, RooDataSet* tth2, 
   
   // Create discrete observable to label channels
   
-  work.factory("mass_[110, 180]");
+  work.factory("mass_[100, 180]");
   work.factory("mean1_a[125., 123., 127.]");
   work.factory("mean2_a[125., 123., 127.]");
   work.factory("mean3_a[125., 123., 127.]");
@@ -204,7 +214,7 @@ float makeFitSimulataneous(RooDataSet* tth1, RooDataSet* ds1, RooDataSet* tth2, 
   {
     RooRealVar x0("x0_a", "x0_a", 0, 10000); 
     RooRealVar x1("x1_a", "x1_a", -100, -0.001); 
-    RooRealVar mass_("mass_", "mass_", 110, 180); 
+    RooRealVar mass_("mass_", "mass_", 100, 180); 
     RooAbsPdf* bkg = RooClassFactory::makePdfInstance("bkg_a", "x0_a*pow(mass_, x1_a)", RooArgSet(mass_, x0, x1));
     work.import(*bkg);
   }
@@ -242,9 +252,9 @@ float makeFitSimulataneous(RooDataSet* tth1, RooDataSet* ds1, RooDataSet* tth2, 
   work.var("mu")->setVal(1.);
   
   work.pdf("signal_a")->fitTo(*tth1, Range(110., 140.), SumW2Error(kTRUE), PrintLevel(-1), RooFit::Minimizer("Minuit","minimize"));
-  work.pdf("bkg_a")->fitTo(*ds1, Range(110., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit","minimize"));
+  work.pdf("bkg_a")->fitTo(*ds1, Range(100., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit","minimize"));
   work.pdf("signal_b")->fitTo(*tth2, Range(110., 140.), SumW2Error(kTRUE), PrintLevel(-1), RooFit::Minimizer("Minuit","minimize"));
-  work.pdf("bkg_b")->fitTo(*ds2, Range(110., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit","minimize"));
+  work.pdf("bkg_b")->fitTo(*ds2, Range(100., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit","minimize"));
   
   // Create discrete observable to label channels
   work.factory("index[channel1, channel2]");

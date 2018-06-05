@@ -12,7 +12,7 @@ void InitTreeVars(TChain* chain, TreeVars& treeVars)
   chain -> SetBranchAddress("dipho_vtxProb", &treeVars.dipho_vtxProb);
   chain -> SetBranchAddress("dipho_sigmaRV", &treeVars.dipho_sigmaRV);
   chain -> SetBranchAddress("dipho_sigmaWV", &treeVars.dipho_sigmaWV);
-  // chain -> SetBranchAddress("dipho_deltaphi", &treeVars.dipho_deltaphi);
+  chain -> SetBranchAddress("dipho_deltaphi", &treeVars.dipho_deltaphi);
   chain -> SetBranchAddress("dipho_cosDeltaphi", &treeVars.dipho_cosDeltaphi);
   chain -> SetBranchAddress("dipho_leadPt", &treeVars.dipho_leadPt);
   chain -> SetBranchAddress("dipho_leadEta", &treeVars.dipho_leadEta);
@@ -31,15 +31,17 @@ void InitTreeVars(TChain* chain, TreeVars& treeVars)
   chain -> SetBranchAddress("dipho_sublead_sigmaEoE", &treeVars.dipho_sublead_sigmaEoE);
   chain -> SetBranchAddress("dipho_subleadIDMVA", &treeVars.dipho_subleadIDMVA);
   chain -> SetBranchAddress("dipho_mva", &treeVars.dipho_mva);
-  chain -> SetBranchAddress("dipho_mva_training2017_v1", &treeVars.dipho_mva_training2017_v1);
+  // chain -> SetBranchAddress("dipho_mva_training2016_best", &treeVars.dipho_mva_training2016_best);
+  // chain -> SetBranchAddress("dipho_mva_training2017_v1", &treeVars.dipho_mva_training2017_v1);
+  // chain -> SetBranchAddress("dipho_mva_training2017_bug", &treeVars.dipho_mva_training2017_bug);
   
-  // chain -> SetBranchAddress("nJets", &treeVars.nJets);
-  // chain -> SetBranchAddress("nJets_bTagLoose", &treeVars.nJets_bTagLoose);
-  // chain -> SetBranchAddress("nJets_bTagMedium", &treeVars.nJets_bTagMedium);
-  // chain -> SetBranchAddress("nJets_bTagTight", &treeVars.nJets_bTagTight);
+  chain -> SetBranchAddress("nJets", &treeVars.nJets);
+  chain -> SetBranchAddress("nJets_bTagLoose", &treeVars.nJets_bTagLoose);
+  chain -> SetBranchAddress("nJets_bTagMedium", &treeVars.nJets_bTagMedium);
+  chain -> SetBranchAddress("nJets_bTagTight", &treeVars.nJets_bTagTight);
   
-  chain -> SetBranchAddress("MetPt", &treeVars.MetPt);
-  chain -> SetBranchAddress("MetPhi", &treeVars.MetPhi);
+  // chain -> SetBranchAddress("MetPt", &treeVars.MetPt);
+  // chain -> SetBranchAddress("MetPhi", &treeVars.MetPhi);
   
   for(int i=1; i<6; i++)
   {
@@ -99,11 +101,13 @@ void InitOutTreeVars(TTree* tree, TreeVars& treeVars)
 {
   tree -> Branch("weight",&treeVars.weight);
   
-  tree -> Branch("dipho_mass",                &treeVars.dipho_mass);
-  tree -> Branch("dipho_sigmaRV",             &treeVars.dipho_sigmaRV);
-  // tree -> Branch("dipho_deltaphi",&treeVars.dipho_deltaphi);
-  tree -> Branch("dipho_mva",                 &treeVars.dipho_mva);
-  tree -> Branch("dipho_mva_training2017_v1", &treeVars.dipho_mva_training2017_v1);
+  tree -> Branch("dipho_mass",                  &treeVars.dipho_mass);
+  tree -> Branch("dipho_sigmaRV",               &treeVars.dipho_sigmaRV);
+  tree -> Branch("dipho_deltaphi",              &treeVars.dipho_deltaphi);
+  tree -> Branch("dipho_mva",                   &treeVars.dipho_mva);
+  // tree -> Branch("dipho_mva_training2016_best", &treeVars.dipho_mva_training2016_best);
+  // tree -> Branch("dipho_mva_training2017_v1",   &treeVars.dipho_mva_training2017_v1);
+  // tree -> Branch("dipho_mva_training2017_bug",  &treeVars.dipho_mva_training2017_bug);
   
   tree -> Branch("dipho_leadEta",      &treeVars.dipho_leadEta);
   tree -> Branch("dipho_leadPhi",      &treeVars.dipho_leadPhi);
@@ -117,8 +121,8 @@ void InitOutTreeVars(TTree* tree, TreeVars& treeVars)
   tree -> Branch("dipho_sublead_sigmaEoE",&treeVars.dipho_sublead_sigmaEoE);
   tree -> Branch("dipho_subleadIDMVA",    &treeVars.dipho_subleadIDMVA);
   
-  // tree -> Branch("nJets",           &treeVars.nJets);
-  // tree -> Branch("nJets_bTagLoose", &treeVars.nJets_bTagLoose);
-  // tree -> Branch("nJets_bTagMedium",&treeVars.nJets_bTagMedium);
-  // tree -> Branch("nJets_bTagTight", &treeVars.nJets_bTagTight);
+  tree -> Branch("nJets",           &treeVars.nJets);
+  tree -> Branch("nJets_bTagLoose", &treeVars.nJets_bTagLoose);
+  tree -> Branch("nJets_bTagMedium",&treeVars.nJets_bTagMedium);
+  tree -> Branch("nJets_bTagTight", &treeVars.nJets_bTagTight);
 }

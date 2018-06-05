@@ -38,6 +38,7 @@ int main(int argc, char** argv)
   
   //--- open files and get trees
   std::vector<std::string> input = opts.GetOpt<std::vector<std::string> >("Input.input");
+  int csType = opts.GetOpt<int>("Output.csType");
   
   TChain* t = new TChain("chain","the chain");
   for(unsigned int ii = 0; ii < input.size()/2; ++ii)
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
     {
       h1_data_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( OneCategorySelection(treeVars,-2,true) == true )
+    else if( OneCategorySelection(treeVars,-2,true,ControlSampleType(csType)) == true )
     {
       h1_cs_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
     {
       h1_data_diLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( DiLeptonSelection(treeVars,-2,true,cat) == true )
+    else if( DiLeptonSelection(treeVars,-2,true,cat,ControlSampleType(csType)) == true )
     {
       h1_cs_diLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -122,25 +123,11 @@ int main(int argc, char** argv)
     {
       h1_data_singleLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( SingleLeptonSelection(treeVars,-2,true) == true)
+    else if( SingleLeptonSelection(treeVars,-2,true,ControlSampleType(csType)) == true)
     {
       h1_cs_singleLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
     // two categories - single lepton
-    
-    
-    //-------------
-    // one category
-    
-    if( OneCategorySelection(treeVars,-1,true) == true )
-    {
-      h1_data_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
-    }
-    else if( OneCategorySelection(treeVars,-2,true) == true )
-    {
-      h1_cs_oneCategory -> Fill(treeVars.dipho_mass, treeVars.weight);
-    }
-    // one category
     
     
     
@@ -151,7 +138,7 @@ int main(int argc, char** argv)
     {
       h1_data_diLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( DiLeptonSelection(treeVars,-2,false,cat) == true )
+    else if( DiLeptonSelection(treeVars,-2,false,cat,ControlSampleType(csType)) == true )
     {
       h1_cs_diLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -165,7 +152,7 @@ int main(int argc, char** argv)
     {
       h1_data_singleLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( SingleLeptonSelection(treeVars,-2,false) == true)
+    else if( SingleLeptonSelection(treeVars,-2,false,ControlSampleType(csType)) == true)
     {
       h1_cs_singleLeptonNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -179,7 +166,7 @@ int main(int argc, char** argv)
     {
       h1_data_oneCategoryNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( OneCategorySelection(treeVars,-2,false) == true )
+    else if( OneCategorySelection(treeVars,-2,false,ControlSampleType(csType)) == true )
     {
       h1_cs_oneCategoryNoBTag -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -224,38 +211,38 @@ int main(int argc, char** argv)
     
     float oldWeight = treeVars.weight;
     
-    if( OneCategorySelection(treeVars,-1,true) == false && OneCategorySelection(treeVars,-2,true) == true )
+    if( OneCategorySelection(treeVars,-1,true) == false && OneCategorySelection(treeVars,-2,true,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
     {
       treeVars.weight = oldWeight * scaleFactor_oneCategory;
       outputTree_oneCategory -> Fill();
     }
     
     DiLeptonCategories cat;
-    if( DiLeptonSelection(treeVars,-1,true,cat) == false && DiLeptonSelection(treeVars,-2,true,cat) == true )
+    if( DiLeptonSelection(treeVars,-1,true,cat) == false && DiLeptonSelection(treeVars,-2,true,cat,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
     {
       treeVars.weight = oldWeight * scaleFactor_diLepton;
       outputTree_diLepton -> Fill();
     }
     
-    if( SingleLeptonSelection(treeVars,-1,true) == false && SingleLeptonSelection(treeVars,-2,true) == true )
+    if( SingleLeptonSelection(treeVars,-1,true) == false && SingleLeptonSelection(treeVars,-2,true,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
     {
       treeVars.weight = oldWeight * scaleFactor_singleLepton;
       outputTree_singleLepton -> Fill();
     }
     
-    if( OneCategorySelection(treeVars,-1,false) == false && OneCategorySelection(treeVars,-2,false) == true )
+    if( OneCategorySelection(treeVars,-1,false) == false && OneCategorySelection(treeVars,-2,false,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
     {
       treeVars.weight = oldWeight * scaleFactor_oneCategoryNoBTag;
       outputTree_oneCategoryNoBTag -> Fill();
     }
     
-    if( DiLeptonSelection(treeVars,-1,false,cat) == false && DiLeptonSelection(treeVars,-2,false,cat) == true )
+    if( DiLeptonSelection(treeVars,-1,false,cat) == false && DiLeptonSelection(treeVars,-2,false,cat,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
     {
       treeVars.weight = oldWeight * scaleFactor_diLeptonNoBTag;
       outputTree_diLeptonNoBTag -> Fill();
     }
     
-    if( SingleLeptonSelection(treeVars,-1,false) == false && SingleLeptonSelection(treeVars,-2,false) == true )
+    if( SingleLeptonSelection(treeVars,-1,false) == false && SingleLeptonSelection(treeVars,-2,false,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
     {
       treeVars.weight = oldWeight * scaleFactor_singleLeptonNoBTag;
       outputTree_singleLeptonNoBTag -> Fill();

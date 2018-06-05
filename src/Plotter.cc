@@ -115,8 +115,10 @@ PlotTH1F::PlotTH1F(const std::string& varName,
     std::string scale = opts_.GetOpt<std::string>(Form("%s.%s.scale",varName_.c_str(),objectName.c_str()));
     int stack = opts_.GetOpt<int>(Form("%s.%s.stack",varName_.c_str(),objectName.c_str()));
     
+    std::string weight2 = opts_.GetOpt<std::string>(Form("%s.%s.weight",varName_.c_str(),objectName.c_str()));
+    
     std::cout << ">>> drawing variable" << formula << " for object " << objectName << std::endl;
-    t -> Draw( Form("%s >>%s_%s",formula.c_str(),objectName.c_str(),varName_.c_str()), (weight+"*"+scale).c_str(), "goff" );
+    t -> Draw( Form("%s >>%s_%s",formula.c_str(),objectName.c_str(),varName_.c_str()), (weight+"*"+weight2+"*"+scale).c_str(), "goff" );
     
     if( normalization == "area" && stack != 1 ) object -> Scale(1./object->Integral());
     if( (normalization == "lumi" || normalization == "lumiScaled") && isData != 1 ) object -> Scale(1.*lumi);
@@ -335,14 +337,14 @@ PlotTH1F::PlotTH1F(const std::string& varName,
   {
     pad1 -> cd();
     if( normalization == "lumi" || normalization == "lumiScaled" )
-      CMS_lumi(pad1,4,10);
+      CMS_lumi(pad1,5,10);
     legend -> Draw("same");
   }
   else
   {
     c_ -> cd();
     if( normalization == "lumi" || normalization == "lumiScaled" )
-      CMS_lumi(c_,4,10);
+      CMS_lumi(c_,5,10);
     legend -> Draw("same");
   }
   

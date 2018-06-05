@@ -20,7 +20,7 @@ struct TreeVars
   float dipho_vtxProb;
   float dipho_sigmaRV;
   float dipho_sigmaWV;
-  //float dipho_deltaphi;
+  float dipho_deltaphi;
   float dipho_cosDeltaphi;
   float dipho_leadPt;
   float dipho_leadEta;
@@ -39,16 +39,18 @@ struct TreeVars
   float dipho_sublead_sigmaEoE;
   float dipho_subleadIDMVA;
   float dipho_mva;
+  float dipho_mva_training2016_best;
   float dipho_mva_training2017_v1;
+  float dipho_mva_training2017_bug;
   
   float MetPt;
   float MetPhi;
   float ttHMVA;
   
-  /* float nJets; */
-  /* float nJets_bTagLoose; */
-  /* float nJets_bTagMedium; */
-  /* float nJets_bTagTight; */
+  float nJets;
+  float nJets_bTagLoose;
+  float nJets_bTagMedium;
+  float nJets_bTagTight;
   
   float jet_pt[9];
   float jet_eta[9];

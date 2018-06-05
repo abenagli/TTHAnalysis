@@ -106,7 +106,10 @@ int main(int argc, char** argv)
     {
       std::string inputVariable = inputVariables.at(jj);
       
-      diphoMVAReaders[diphoMVA_label] -> AddVariable(inputVariable.c_str(),varMap[inputVariable.c_str()]);
+      if( diphoMVA_label == "training2017_bug" && inputVariable == "dipho_lead_sigmaEoE" )
+        diphoMVAReaders[diphoMVA_label] -> AddVariable(inputVariable.c_str(),varMap["dipho_sublead_sigmaEoE"]);
+      else
+        diphoMVAReaders[diphoMVA_label] -> AddVariable(inputVariable.c_str(),varMap[inputVariable.c_str()]);
     }
     
     diphoMVAReaders[diphoMVA_label] -> BookMVA( diphoMVA_methods[diphoMVA_label],weightsFile.c_str() );
