@@ -40,13 +40,10 @@
 using namespace std;
 using namespace RooFit;
 
-bool cutBased = false;
+bool verbosity = false;
+bool cutBased = true;
 
 float lumi = 41.7;
-
-int jetThreshold = 2;
-int bjetThreshold = 1;
-float jetPtThreshold = 0.;
 
 ControlSampleType csType = kInvertBTag;
 
@@ -231,7 +228,7 @@ int main(int argc, char* argv[])
       
       outTree_1jet -> Fill();
       
-      bool passCutBased = CutBasedSelection(treeVars,0.4,0.3,0.,-0.5,2.5,2.);
+      bool passCutBased = CutBasedSelection(treeVars,0.33,0.25,0.0,0.0,3.15,3.);
       
       // fill event counters - cut based
         if( type == 1 )
@@ -273,6 +270,35 @@ int main(int argc, char* argv[])
       if( cutBased && !passCutBased ) continue;
       
       
+      // if( treeVars.event == 324559 )
+      // {
+      //   std::cout << "################################" << std::endl;
+        
+      //   std::cout << ">>> photons: " << std::endl;
+        
+      //   std::cout << ">>>>>> lead:      pt: " << treeVars.dipho_leadPt << "   eta: " << treeVars.dipho_leadEta << "   phi: " << treeVars.dipho_leadPhi << std::endl;
+      //   std::cout << ">>>>>> sublead:   pt: " << treeVars.dipho_subleadPt << "   eta: " << treeVars.dipho_subleadEta << "   phi: " << treeVars.dipho_subleadPhi << std::endl;
+        
+      //   std::cout << ">>> muons: " << std::endl;
+      //   for(int jj = 0; jj < 2; ++jj)
+      //   {
+      //     std::cout << ">>>>>> jj: " << jj << "   pt: " << treeVars.mu_pt[jj] << "   eta: " << treeVars.mu_eta[jj] << "   phi: " << treeVars.mu_phi[jj];
+      //     for(int kk = 0; kk < 2; ++kk)
+      //       std::cout << "   IDVector[" << kk << "]: " << treeVars.mu_IDVector[jj][kk];
+      //     std::cout << std::endl;
+      //   }
+        
+      //   std::cout << ">>> electrons: " << std::endl;
+      //   for(int jj = 0; jj < 2; ++jj)
+      //   {
+      //     std::cout << ">>>>>> jj: " << jj << "   pt: " << treeVars.ele_pt[jj] << "   eta: " << treeVars.ele_eta[jj] << "   phi: " << treeVars.ele_phi[jj];
+      //     for(int kk = 0; kk < 10; ++kk)
+      //       std::cout << "   IDVector[" << kk << "]: " << treeVars.ele_IDVector[jj][kk];
+      //     std::cout << std::endl;
+      //   }
+      //   std::cout << "################################" << std::endl;
+      // }
+      
       //-------------
       // one category
       bool bTagSelection = true;
@@ -294,9 +320,8 @@ int main(int argc, char* argv[])
       // two categories - dilepton
       
       DiLeptonCategories cat = None;
-      if( DiLeptonSelection(treeVars,type,bTagSelection,cat,csType) )
+      if( DiLeptonSelection(treeVars,type,bTagSelection,cat,csType,false) )
       {
-        // std::cout << ">>>> PASSED DILEPTON" << std::endl;
         ++nEntries_diLepton;
         
         mass_diLepton_histo[label] -> Fill(treeVars.dipho_mass, treeVars.weight*lumiFactor);
@@ -309,19 +334,31 @@ int main(int argc, char* argv[])
         
         outTree_diLepton -> Fill();
         
+        if( verbosity )
+        {
+          std::cout << ">>> DiLeptonSelection::pass   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          DiLeptonSelection(treeVars,type,bTagSelection,cat,csType,verbosity);
+          std::cout << ">>> DiLeptonSelection::selected category: " << cat << std::endl;
+          std::cout << std::endl;
+        }
         if( type != -2 ) continue;
       } // two categories - dilepton
-      // else
-      // {
-      //   std::cout << ">>>> FAILED DILEPTON" << std::endl;
-      // }
+      else
+      {
+        if( verbosity )
+        {
+          std::cout << ">>> DiLeptonSelection::fail   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          DiLeptonSelection(treeVars,type,bTagSelection,cat,csType,verbosity);
+          std::cout << std::endl;
+        }
+      }
+      
       
       //-------------------------------
       // two categories - single lepton
-      // std::cout << "\n\n\n" << std::endl;
+      
       if( SingleLeptonSelection(treeVars,type,bTagSelection,csType) )
       {
-        std::cout << ">>>> PASSED SINGLELEPTON" << std::endl;
         ++nEntries_singleLepton;
         
         mass_singleLepton_histo[label] -> Fill(treeVars.dipho_mass, treeVars.weight*lumiFactor);
@@ -333,10 +370,15 @@ int main(int argc, char* argv[])
         if( label == "data"            ) dataSingleLepton.add(RooArgSet(mass_,mva_), treeVars.weight*lumiFactor);
         
         outTree_singleLepton -> Fill();
+        
+        if( verbosity )
+        {
+          std::cout << ">>> SingleLeptonSelection::pass   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+        }
       } // two categories - single lepton
       // else
       // {
-      //   std::cout << ">>>> FAILED SINGLELEPTON" << std::endl;
+      //   SingleLeptonSelection(treeVars,type,bTagSelection,csType,verbosity);
       // }
       
       
@@ -396,40 +438,41 @@ int main(int argc, char* argv[])
   g_ROC_mva -> Write("g_ROC_mva");
   g_ROC_mva_new -> Write("g_ROC_mva_new");
   
+  std::cout << "#########################################################################" << std::endl;
+  
   
   
   bool doFit = 1;
-  bool diSimultaneous = 0;
+  bool doSimultaneous = 0;
   
-  if(doFit)
+  if( doFit )
   {
-    // float oneCatSignificance = makeFits(&tthOneCat, &csOneCat, -1., "OneCategory", 0, 0, 0);
-    float diLeptonSignificance = makeFits(&tthDiLepton, &csDiLepton, -1., "DiLepton", 0, 0, 0);
-    float singleLeptonSignificance = makeFits(&tthSingleLepton, &csSingleLepton, -1., "SingleLepton", 0, 0, 0);
-    
-    // float purityOneCat = (mass_oneCat_histo["ttH"] -> Integral() / (mass_oneCat_histo["ttH"]->Integral() + mass_oneCat_histo["ggH"]->Integral() + mass_oneCat_histo["VBF"]->Integral() + mass_oneCat_histo["VH"]->Integral() + mass_oneCat_histo["bbH"]->Integral() + mass_oneCat_histo["tHq"]->Integral() + mass_oneCat_histo["tHW"]->Integral() ) )*100.;
-    // float purityDiLepton = (mass_diLepton_histo["ttH"] -> Integral() / (mass_diLepton_histo["ttH"]->Integral() + mass_diLepton_histo["ggH"]->Integral() + mass_diLepton_histo["VBF"]->Integral() + mass_diLepton_histo["VH"]->Integral() + mass_diLepton_histo["bbH"]->Integral() + mass_diLepton_histo["tHq"]->Integral() + mass_diLepton_histo["tHW"]->Integral() ) )*100.;
-    // float puritySingleLepton = (mass_singleLepton_histo["ttH"] -> Integral() / (mass_singleLepton_histo["ttH"]->Integral() + mass_singleLepton_histo["ggH"]->Integral() + mass_singleLepton_histo["VBF"]->Integral() + mass_singleLepton_histo["VH"]->Integral() + mass_singleLepton_histo["bbH"]->Integral() + mass_singleLepton_histo["tHq"]->Integral() + mass_singleLepton_histo["tHW"]->Integral() ) )*100.;
-    // float purityOneCat = (mass_oneCat_histo["ttH"] -> Integral() / (mass_oneCat_histo["ttH"]->Integral() + mass_oneCat_histo["ggH"]->Integral() + mass_oneCat_histo["VBF"]->Integral() + mass_oneCat_histo["VH"]->Integral() ) )*100.;
-    float purityDiLepton = (mass_diLepton_histo["ttH"] -> Integral() / (mass_diLepton_histo["ttH"]->Integral() + mass_diLepton_histo["ggH"]->Integral() + mass_diLepton_histo["VBF"]->Integral() + mass_diLepton_histo["VH"]->Integral() ) )*100.;
-    float puritySingleLepton = (mass_singleLepton_histo["ttH"] -> Integral() / (mass_singleLepton_histo["ttH"]->Integral() + mass_singleLepton_histo["ggH"]->Integral() + mass_singleLepton_histo["VBF"]->Integral() + mass_singleLepton_histo["VH"]->Integral() ) )*100.;
-    
     std::cout << "#################################################################################" << std::endl;
     std::cout << "################################## FIT RESULTS ##################################" << std::endl;
-    // std::cout << "Significance with one leptonic category: " << oneCatSignificance << std::endl;
-    std::cout << "Significance with two leptonic categories: " << sqrt(diLeptonSignificance*diLeptonSignificance + singleLeptonSignificance*singleLeptonSignificance) << " (" << diLeptonSignificance <<  " from dileptonic category, " << singleLeptonSignificance << " from one lepton category)" << std::endl << std::endl;
-    // std::cout << "ttH events single category: " <<    mass_oneCat_histo["ttH"] -> Integral() << " events, tag purity: " << purityOneCat       << std::endl;
+    
+    std::vector<float> diLeptonSignificance_cs = makeFits(&tthDiLepton, &csDiLepton, -1., "diLepton_cs", 0, 0);
+    std::vector<float> singleLeptonSignificance_cs = makeFits(&tthSingleLepton, &csSingleLepton, -1., "singleLepton_cs", 0, 0);
+    std::vector<float> diLeptonSignificance_sb = makeFits(&tthDiLepton, &dataDiLepton, -1., "diLepton_sb", 0, 1, true);
+    std::vector<float> singleLeptonSignificance_sb = makeFits(&tthSingleLepton, &dataSingleLepton, -1., "singleLepton_sb", 0, 1, true);
+    
+    float purityDiLepton = (mass_diLepton_histo["ttH"] -> Integral() /
+                            (mass_diLepton_histo["ttH"]->Integral() + mass_diLepton_histo["ggH"]->Integral() + mass_diLepton_histo["VBF"]->Integral() + mass_diLepton_histo["VH"]->Integral() ) ) * 100.;
+    float puritySingleLepton = (mass_singleLepton_histo["ttH"] -> Integral() /
+                                (mass_singleLepton_histo["ttH"]->Integral() + mass_singleLepton_histo["ggH"]->Integral() + mass_singleLepton_histo["VBF"]->Integral() + mass_singleLepton_histo["VH"]->Integral() ) ) * 100.;
+    
+    std::cout << "Significance with two leptonic categories (control sample): " << sqrt(diLeptonSignificance_cs[2]*diLeptonSignificance_cs[2] + singleLeptonSignificance_cs[2]*singleLeptonSignificance_cs[2]) << " (" << diLeptonSignificance_cs[2] <<  " from dileptonic category, " << singleLeptonSignificance_cs[2] << " from one lepton category)" << std::endl << std::endl;
+    std::cout << "Significance with two leptonic categories (data sideband): " << sqrt(diLeptonSignificance_sb[2]*diLeptonSignificance_sb[2] + singleLeptonSignificance_sb[2]*singleLeptonSignificance_sb[2]) << " (" << diLeptonSignificance_sb[2] <<  " from dileptonic category, " << singleLeptonSignificance_sb[2] << " from one lepton category)" << std::endl << std::endl;
+    
     std::cout << "ttH events diLepton:        " <<  mass_diLepton_histo["ttH"] -> Integral() << " events, tag purity: " << purityDiLepton     << std::endl; 
     std::cout << "ttH events one Lepton:      " << mass_singleLepton_histo["ttH"] -> Integral() << " events, tag purity: " << puritySingleLepton << std::endl; 
-    std::cout << "$$$$$$$$$$$$$$$$$$$$$" << std::endl;
+    std::cout << "#################################################################################" << std::endl;    
     
     
-    if(diSimultaneous)
+    if( doSimultaneous )
     {
       float significanceCombined = makeFitSimulataneous(&tthDiLepton, &csDiLepton, &tthSingleLepton, &csSingleLepton, "ChiLoSa");
       std::cout << std::endl << "Significance from the simultanoeus fit of the two categories " << significanceCombined << std::endl;
     }
-    std::cout << "#################################################################################" << std::endl;
     
     
     if( doDiphoMVAScan )
@@ -438,115 +481,186 @@ int main(int argc, char* argv[])
       std::cout << "####################################################################################" << std::endl;
       std::cout << "################################## DOING MVA SCAN ##################################" << std::endl;
       
-      // TGraph* g_oneCatSignificance = new TGraph();
-      TGraph* g_diLeptonSignificance = new TGraph();
-      TGraph* g_singleLeptonSignificance = new TGraph();
+      float sigN_diLepton_initial = diLeptonSignificance_cs[0];
+      float bkgN_diLepton_initial = diLeptonSignificance_cs[1];
+      float sigN_singleLepton_initial = singleLeptonSignificance_cs[0];
+      float bkgN_singleLepton_initial = singleLeptonSignificance_cs[1];
       
-      TCut massCut = Form("mass_ > 100");
-      // RooDataSet* tthOneCat_red = (RooDataSet*)tthOneCat.reduce(massCut);
-      // RooDataSet* csOneCat_red  = (RooDataSet*)csOneCat.reduce(massCut);
-      RooDataSet* tthDiLepton_red = (RooDataSet*)tthDiLepton.reduce(massCut);
-      RooDataSet* csDiLepton_red  = (RooDataSet*)csDiLepton.reduce(massCut);
-      RooDataSet* tthSingleLepton_red = (RooDataSet*)tthSingleLepton.reduce(massCut);
-      RooDataSet* csSingleLepton_red  = (RooDataSet*)csSingleLepton.reduce(massCut);
+      TGraph* g_sigN_diLepton = new TGraph();
+      TGraph* g_bkgN_diLepton = new TGraph();
+      TGraph* g_sigN_singleLepton = new TGraph();
+      TGraph* g_bkgN_singleLepton = new TGraph();
       
-      // float sumEntries_sig_oneCat = tthOneCat_red -> sumEntries();
-      // float sumEntries_bkg_oneCat = csOneCat_red -> sumEntries();
-      float sumEntries_sig_diLepton = tthDiLepton_red -> sumEntries();
-      float sumEntries_bkg_diLepton = csDiLepton_red -> sumEntries();
-      float sumEntries_sig_singleLepton = tthSingleLepton_red -> sumEntries();
-      float sumEntries_bkg_singleLepton = csSingleLepton_red -> sumEntries();
-      
-      // TGraph* g_sigEff_oneCat = new TGraph();
-      // TGraph* g_bkgEff_oneCat = new TGraph();
       TGraph* g_sigEff_diLepton = new TGraph();
       TGraph* g_bkgEff_diLepton = new TGraph();
       TGraph* g_sigEff_singleLepton = new TGraph();
       TGraph* g_bkgEff_singleLepton = new TGraph();
       
-      for(float mvaMin = -1.; mvaMin < 1.; mvaMin+=0.1)
+      TGraph* g_diLeptonSignificance_cs = new TGraph();
+      TGraph* g_singleLeptonSignificance_cs = new TGraph();
+      TGraph* g_diLeptonSignificance_sb = new TGraph();
+      TGraph* g_singleLeptonSignificance_sb = new TGraph();
+      
+      TGraph* g_diLeptonNaiveSignificance_cs = new TGraph();
+      TGraph* g_singleLeptonNaiveSignificance_cs = new TGraph();
+      TGraph* g_diLeptonNaiveSignificance_sb = new TGraph();
+      TGraph* g_singleLeptonNaiveSignificance_sb = new TGraph();
+      
+      for(float mvaMin = -1.; mvaMin < 1.; mvaMin+=0.05)
       {
-        // oneCatSignificance = makeFits(&tthOneCat, &csOneCat, mvaMin, "OneCategory", 0, 0, 0);
-        diLeptonSignificance = makeFits(&tthDiLepton, &csDiLepton, mvaMin, "DiLepton", 0, 0, 0);
-        singleLeptonSignificance = makeFits(&tthSingleLepton, &csSingleLepton, mvaMin, "SingleLepton", 0, 0, 0);    
+        diLeptonSignificance_cs = makeFits(&tthDiLepton, &csDiLepton, mvaMin, "diLepton_cs", 0, 0);
+        singleLeptonSignificance_cs = makeFits(&tthSingleLepton, &csSingleLepton, mvaMin, "singleLepton_cs", 0, 0);
+        diLeptonSignificance_sb = makeFits(&tthDiLepton, &dataDiLepton, mvaMin, "diLepton_sb", 0, 1, true);
+        singleLeptonSignificance_sb = makeFits(&tthSingleLepton, &dataSingleLepton, mvaMin, "singleLepton_sb", 0, 1, true);
         
-        // g_oneCatSignificance -> SetPoint(g_oneCatSignificance->GetN(),mvaMin,oneCatSignificance);
-        g_diLeptonSignificance -> SetPoint(g_diLeptonSignificance->GetN(),mvaMin,diLeptonSignificance);
-        g_singleLeptonSignificance -> SetPoint(g_singleLeptonSignificance->GetN(),mvaMin,singleLeptonSignificance);
+        g_sigN_diLepton     -> SetPoint(g_sigN_diLepton->GetN(),    mvaMin,    diLeptonSignificance_cs[0]);
+        g_bkgN_diLepton     -> SetPoint(g_bkgN_diLepton->GetN(),    mvaMin,    diLeptonSignificance_cs[1]/4.);
+        g_sigN_singleLepton -> SetPoint(g_sigN_singleLepton->GetN(),mvaMin,singleLeptonSignificance_cs[0]);
+        g_bkgN_singleLepton -> SetPoint(g_bkgN_singleLepton->GetN(),mvaMin,singleLeptonSignificance_cs[1]/4.);
         
-        TCut mvaCut = Form("mva_ > %f && mass_ > 100",mvaMin);
-        // tthOneCat_red = (RooDataSet*)tthOneCat.reduce(mvaCut);
-        // csOneCat_red  = (RooDataSet*)csOneCat.reduce(mvaCut);
-        tthDiLepton_red = (RooDataSet*)tthDiLepton.reduce(mvaCut);
-        csDiLepton_red  = (RooDataSet*)csDiLepton.reduce(mvaCut);
-        tthSingleLepton_red = (RooDataSet*)tthSingleLepton.reduce(mvaCut);
-        csSingleLepton_red  = (RooDataSet*)csSingleLepton.reduce(mvaCut);
+        g_sigEff_diLepton     -> SetPoint(g_sigEff_diLepton->GetN(),    mvaMin,    diLeptonSignificance_cs[0]/    sigN_diLepton_initial);
+        g_bkgEff_diLepton     -> SetPoint(g_bkgEff_diLepton->GetN(),    mvaMin,    diLeptonSignificance_cs[1]/    bkgN_diLepton_initial);
+        g_sigEff_singleLepton -> SetPoint(g_sigEff_singleLepton->GetN(),mvaMin,singleLeptonSignificance_cs[0]/sigN_singleLepton_initial);
+        g_bkgEff_singleLepton -> SetPoint(g_bkgEff_singleLepton->GetN(),mvaMin,singleLeptonSignificance_cs[1]/bkgN_singleLepton_initial);
         
-        // g_sigEff_oneCat -> SetPoint(g_sigEff_oneCat->GetN(),mvaMin,tthOneCat_red->sumEntries()/sumEntries_sig_oneCat);
-        // g_bkgEff_oneCat -> SetPoint(g_bkgEff_oneCat->GetN(),mvaMin,csOneCat_red->sumEntries()/sumEntries_bkg_oneCat);
-        g_sigEff_diLepton -> SetPoint(g_sigEff_diLepton->GetN(),mvaMin,tthDiLepton_red->sumEntries()/sumEntries_sig_diLepton);
-        g_bkgEff_diLepton -> SetPoint(g_bkgEff_diLepton->GetN(),mvaMin,csDiLepton_red->sumEntries()/sumEntries_bkg_diLepton);
-        g_sigEff_singleLepton -> SetPoint(g_sigEff_singleLepton->GetN(),mvaMin,tthSingleLepton_red->sumEntries()/sumEntries_sig_singleLepton);
-        g_bkgEff_singleLepton -> SetPoint(g_bkgEff_singleLepton->GetN(),mvaMin,csSingleLepton_red->sumEntries()/sumEntries_bkg_singleLepton);
+        g_diLeptonSignificance_cs     -> SetPoint(    g_diLeptonSignificance_cs->GetN(),mvaMin,    diLeptonSignificance_cs[2]);
+        g_singleLeptonSignificance_cs -> SetPoint(g_singleLeptonSignificance_cs->GetN(),mvaMin,singleLeptonSignificance_cs[2]);
+        g_diLeptonSignificance_sb     -> SetPoint(    g_diLeptonSignificance_sb->GetN(),mvaMin,    diLeptonSignificance_sb[2]);
+        g_singleLeptonSignificance_sb -> SetPoint(g_singleLeptonSignificance_sb->GetN(),mvaMin,singleLeptonSignificance_sb[2]);
+        
+        g_diLeptonNaiveSignificance_cs     -> SetPoint(    g_diLeptonNaiveSignificance_cs->GetN(),mvaMin,    diLeptonSignificance_cs[0]/sqrt(    diLeptonSignificance_cs[1]));
+        g_singleLeptonNaiveSignificance_cs -> SetPoint(g_singleLeptonNaiveSignificance_cs->GetN(),mvaMin,singleLeptonSignificance_cs[0]/sqrt(singleLeptonSignificance_cs[1]));
+        g_diLeptonNaiveSignificance_sb     -> SetPoint(    g_diLeptonNaiveSignificance_sb->GetN(),mvaMin,    diLeptonSignificance_sb[0]/sqrt(    diLeptonSignificance_sb[1]));
+        g_singleLeptonNaiveSignificance_sb -> SetPoint(g_singleLeptonNaiveSignificance_sb->GetN(),mvaMin,singleLeptonSignificance_sb[0]/sqrt(singleLeptonSignificance_sb[1]));
       }
       
+      
       TCanvas* c = new TCanvas();
+      TH1F* hPad;
+  
+      c = new TCanvas();
       c -> cd();
-      TH1F* hPad = (TH1F*)( gPad->DrawFrame(-1.,0.,1.,2.) );
+      gPad -> SetGridx();
+      gPad -> SetGridy();
+      
+      hPad = (TH1F*)( gPad->DrawFrame(-1.,0.,1.,1.5) );
       hPad -> SetTitle(";diphoton MVA cut;significance");
       
-      // g_oneCatSignificance -> SetLineColor(kBlack);
-      // g_oneCatSignificance -> SetLineStyle(2);
-      // g_oneCatSignificance -> Draw("L,same");
-      g_diLeptonSignificance -> SetLineColor(kRed);
-      g_diLeptonSignificance -> Draw("L,same");
-      g_singleLeptonSignificance -> SetLineColor(kMagenta);
-      g_singleLeptonSignificance -> Draw("L,same");
+      g_diLeptonSignificance_cs -> SetLineColor(kRed);
+      g_diLeptonSignificance_cs -> SetLineStyle(1);
+      g_diLeptonSignificance_cs -> SetLineWidth(2);
+      g_diLeptonSignificance_cs -> Draw("L,same");
+      
+      g_diLeptonSignificance_sb -> SetLineColor(kBlack);
+      g_diLeptonSignificance_sb -> SetLineStyle(1);
+      g_diLeptonSignificance_sb -> SetLineWidth(2);
+      g_diLeptonSignificance_sb -> Draw("L,same");
+      
+      g_diLeptonNaiveSignificance_cs -> SetLineColor(kRed);
+      g_diLeptonNaiveSignificance_cs -> SetLineStyle(2);
+      g_diLeptonNaiveSignificance_cs -> SetLineWidth(2);
+      g_diLeptonNaiveSignificance_cs -> Draw("L,same");
+      
+      g_diLeptonNaiveSignificance_sb -> SetLineColor(kBlack);
+      g_diLeptonNaiveSignificance_sb -> SetLineStyle(2);
+      g_diLeptonNaiveSignificance_sb -> SetLineWidth(2);
+      g_diLeptonNaiveSignificance_sb -> Draw("L,same");
+      
+      c -> SaveAs("c_significance_vs_mva_diLepton.png");
+      c -> SaveAs("c_significance_vs_mva_diLepton.pdf");
+      
+      
+      c = new TCanvas();
+      c -> cd();
+      gPad -> SetGridx();
+      gPad -> SetGridy();
+      
+      hPad = (TH1F*)( gPad->DrawFrame(-1.,0.,1.,1.5) );
+      hPad -> SetTitle(";diphoton MVA cut;significance");
+      
+      g_singleLeptonSignificance_cs -> SetLineColor(kRed);
+      g_singleLeptonSignificance_cs -> SetLineStyle(1);
+      g_singleLeptonSignificance_cs -> SetLineWidth(2);
+      g_singleLeptonSignificance_cs -> Draw("L,same");
+      
+      g_singleLeptonSignificance_sb -> SetLineColor(kBlack);
+      g_singleLeptonSignificance_sb -> SetLineStyle(1);
+      g_singleLeptonSignificance_sb -> SetLineWidth(2);
+      g_singleLeptonSignificance_sb -> Draw("L,same");
+      
+      g_singleLeptonNaiveSignificance_cs -> SetLineColor(kRed);
+      g_singleLeptonNaiveSignificance_cs -> SetLineStyle(2);
+      g_singleLeptonNaiveSignificance_cs -> SetLineWidth(2);
+      g_singleLeptonNaiveSignificance_cs -> Draw("L,same");
+      
+      g_singleLeptonNaiveSignificance_sb -> SetLineColor(kBlack);
+      g_singleLeptonNaiveSignificance_sb -> SetLineStyle(2);
+      g_singleLeptonNaiveSignificance_sb -> SetLineWidth(2);
+      g_singleLeptonNaiveSignificance_sb -> Draw("L,same");
+      
+      c -> SaveAs("c_significance_vs_mva_singleLepton.png");
+      c -> SaveAs("c_significance_vs_mva_singleLepton.pdf");
+      
+      
+      c = new TCanvas();
+      c -> cd();
+      gPad -> SetGridx();
+      gPad -> SetGridy();
+      
+      hPad = (TH1F*)( gPad->DrawFrame(-1.,0.01,1.,5.) );
+      hPad -> SetTitle(";diphoton MVA cut;number of events");
+      
+      g_sigN_diLepton -> SetLineColor(kRed);
+      g_sigN_diLepton -> SetLineWidth(2);
+      g_sigN_diLepton -> Draw("L,same");
+      g_bkgN_diLepton -> SetLineColor(kBlack);
+      g_bkgN_diLepton -> SetLineWidth(2);
+      g_bkgN_diLepton -> Draw("L,same");
       
       outFile_global -> cd();
-      // g_oneCatSignificance -> Write("g_oneCatSignificance");
-      g_diLeptonSignificance -> Write("g_diLeptonSignificance");
-      g_singleLeptonSignificance -> Write("g_singleLeptonSignificance");
       
-      c -> SaveAs("c_significance_vs_mva.png");
-      c -> SaveAs("c_significance_vs_mva.pdf");
+      c -> SaveAs("c_N_vs_mva_diLepton.png");
+      c -> SaveAs("c_N_vs_mva_diLepton.pdf");
       
       
-      // c = new TCanvas();
-      // c -> cd();
-      // c -> SetLogy();
+      c = new TCanvas();
+      c -> cd();
+      gPad -> SetGridx();
+      gPad -> SetGridy();
       
-      // hPad = (TH1F*)( gPad->DrawFrame(-1.,0.01,1.,1.) );
-      // hPad -> SetTitle(";diphoton MVA cut;efficiency");
+      hPad = (TH1F*)( gPad->DrawFrame(-1.,0.01,1.,5.) );
+      hPad -> SetTitle(";diphoton MVA cut;number of events");
       
-      // g_sigEff_oneCat -> SetLineColor(kRed);
-      // g_sigEff_oneCat -> Draw("L,same");
-      // g_bkgEff_oneCat -> SetLineColor(kBlack);
-      // g_bkgEff_oneCat -> Draw("L,same");
+      g_sigN_singleLepton -> SetLineColor(kRed);
+      g_sigN_singleLepton -> SetLineWidth(2);
+      g_sigN_singleLepton -> Draw("L,same");
+      g_bkgN_singleLepton -> SetLineColor(kBlack);
+      g_bkgN_singleLepton -> SetLineWidth(2);
+      g_bkgN_singleLepton -> Draw("L,same");
       
-      // outFile_global -> cd();
-      // g_sigEff_oneCat -> Write("g_sigEff_oneCat");
-      // g_bkgEff_oneCat -> Write("g_bkgEff_oneCat");
+      outFile_global -> cd();
       
-      // c -> SaveAs("c_eff_vs_mva_oneCategory.png");
-      // c -> SaveAs("c_eff_vs_mva_oneCategory.pdf");
+      c -> SaveAs("c_N_vs_mva_singleLepton.png");
+      c -> SaveAs("c_N_vs_mva_singleLepton.pdf");
       
       
       c = new TCanvas();
       c -> cd();
       c -> SetLogy();
+      gPad -> SetGridx();
+      gPad -> SetGridy();
       
       hPad = (TH1F*)( gPad->DrawFrame(-1.,0.01,1.,1.) );
       hPad -> SetTitle(";diphoton MVA cut;efficiency");
       
       g_sigEff_diLepton -> SetLineColor(kRed);
+      g_sigEff_diLepton -> SetLineWidth(2);
       g_sigEff_diLepton -> Draw("L,same");
       g_bkgEff_diLepton -> SetLineColor(kBlack);
+      g_bkgEff_diLepton -> SetLineWidth(2);
       g_bkgEff_diLepton -> Draw("L,same");
       
       outFile_global -> cd();
-      g_sigEff_diLepton -> Write("g_sigEff_diLepton");
-      g_bkgEff_diLepton -> Write("g_bkgEff_diLepton");
       
       c -> SaveAs("c_eff_vs_mva_diLepton.png");
       c -> SaveAs("c_eff_vs_mva_diLepton.pdf");
@@ -555,21 +669,35 @@ int main(int argc, char* argv[])
       c = new TCanvas();
       c -> cd();
       c -> SetLogy();
+      gPad -> SetGridx();
+      gPad -> SetGridy();
       
       hPad = (TH1F*)( gPad->DrawFrame(-1.,0.01,1.,1.) );
       hPad -> SetTitle(";diphoton MVA cut;efficiency");
       
       g_sigEff_singleLepton -> SetLineColor(kRed);
+      g_sigEff_singleLepton -> SetLineWidth(2);
       g_sigEff_singleLepton -> Draw("L,same");
       g_bkgEff_singleLepton -> SetLineColor(kBlack);
+      g_bkgEff_singleLepton -> SetLineWidth(2);
       g_bkgEff_singleLepton -> Draw("L,same");
       
       outFile_global -> cd();
-      g_sigEff_singleLepton -> Write("g_sigEff_singleLepton");
-      g_bkgEff_singleLepton -> Write("g_bkgEff_singleLepton");
       
       c -> SaveAs("c_eff_vs_mva_singleLepton.png");
       c -> SaveAs("c_eff_vs_mva_singleLepton.pdf");
+      
+      
+      outFile_global -> cd();
+      g_diLeptonSignificance_cs -> Write("g_diLeptonSignificance_cs");
+      g_singleLeptonSignificance_cs -> Write("g_singleLeptonSignificance_cs");
+      g_diLeptonSignificance_sb -> Write("g_diLeptonSignificance_sb");
+      g_singleLeptonSignificance_sb -> Write("g_singleLeptonSignificance_sb");
+      g_sigEff_diLepton -> Write("g_sigEff_diLepton");
+      g_bkgEff_diLepton -> Write("g_bkgEff_diLepton");
+      g_sigEff_singleLepton -> Write("g_sigEff_singleLepton");
+      g_bkgEff_singleLepton -> Write("g_bkgEff_singleLepton");
+
     }
     
     system(Form("mkdir %s/Optimization",outputPlotFolder.c_str()));
@@ -580,3 +708,5 @@ int main(int argc, char* argv[])
   
   outFile_global -> Close();
 }
+
+//  LocalWords:  endl

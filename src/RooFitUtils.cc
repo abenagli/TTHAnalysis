@@ -2,9 +2,9 @@
 
 
 
-float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int i, bool usePowerLaw, bool useSingleExp)
+std::vector<float> makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, bool usePowerLaw, bool useSingleExp, bool doSidebandFit)
 {
-  float significance = -1;
+  std::vector<float> result;
   
   TCut mvaCut = Form("mva_ > %f && mass_ > 100",mvaMin);
   RooDataSet* tth_red = (RooDataSet*)tth->reduce(mvaCut);
@@ -27,9 +27,10 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   work.factory("SUM::signalz(frac1[0., 1.]*gauss1,gauss2)");
   work.factory("SUM::signal(frac1[0., 1.]*gauss3, signalz)");
   
-  work.var("mass_") -> setRange("low", 100., 121. );
+  work.var("mass_") -> setRange("low", 100., 115. );
   work.var("mass_") -> setRange("cen", 110., 140. );
-  work.var("mass_") -> setRange("hig", 129., 180. );
+  work.var("mass_") -> setRange("eff", 123., 127. );
+  work.var("mass_") -> setRange("hig", 135., 180. );
   
   
   if(usePowerLaw)
@@ -61,13 +62,30 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   work.var("bkg_ev")->setVal(cs_red->sumEntries());
   
   work.pdf("signal")->fitTo(*tth_red, Range(110., 140.), SumW2Error(kTRUE), PrintLevel(-1), RooFit::Minimizer("Minuit2","Migrad"));
-  work.pdf("bkg")->fitTo(*cs_red, Range(100., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit2","Migrad"));
-  // work.pdf("bkg")->fitTo(*cs_red, Range("low,hig"), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit2","Migrad"));
+  if( !doSidebandFit )
+    work.pdf("bkg")->fitTo(*cs_red, Range(100., 180.), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit2","Migrad"));
+  else
+    work.pdf("bkg")->fitTo(*cs_red, Range("low,hig"), SumW2Error(kTRUE), PrintLevel(-1),  RooFit::Minimizer("Minuit2","Migrad"));
+  
+  if( doSidebandFit)
+  {
+    RooAbsReal* intBkg_sb_low = work.pdf("bkg") -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"low");
+    RooAbsReal* intBkg_sb_hig = work.pdf("bkg") -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"hig");
+    work.var("bkg_ev")->setVal(work.var("bkg_ev")->getVal()/(intBkg_sb_low->getVal()+intBkg_sb_hig->getVal()));
+  }
   
   RooAbsReal* intSig = work.pdf("signal") -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"cen");
   RooAbsReal* intBkg = work.pdf("bkg")    -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"cen");
-  std::cout << ">>>>>>     Signal in 120-130 GeV: " << intSig->getVal()*work.var("tth_ev")->getVal() << " (" << intSig->getVal()*work.var("tth_ev")->getVal()/30. << " ev/GeV)" << endl;
-  std::cout << ">>>>>> Background in 120-130 GeV: " << intBkg->getVal()*work.var("bkg_ev")->getVal() << " (" << intBkg->getVal()*work.var("bkg_ev")->getVal()/30. << " ev/GeV)" << endl;
+  std::cout << ">>>>>> " << title << std::endl;
+  std::cout << ">>>>>>     Signal in 110-140 GeV: " << intSig->getVal()*work.var("tth_ev")->getVal() << " (" << intSig->getVal()*work.var("tth_ev")->getVal()/30. << " ev/GeV)" << endl;
+  std::cout << ">>>>>> Background in 110-140 GeV: " << intBkg->getVal()*work.var("bkg_ev")->getVal() << " (" << intBkg->getVal()*work.var("bkg_ev")->getVal()/30. << " ev/GeV)" << endl;
+  intSig = work.pdf("signal") -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"eff");
+  intBkg = work.pdf("bkg")    -> createIntegral(*(work.var("mass_")),*(work.var("mass_")),"eff");
+  std::cout << ">>>>>>     Signal in 123-127 GeV: " << intSig->getVal()*work.var("tth_ev")->getVal() << " (" << intSig->getVal()*work.var("tth_ev")->getVal()/4. << " ev/GeV)" << endl;
+  std::cout << ">>>>>> Background in 123-127 GeV: " << intBkg->getVal()*work.var("bkg_ev")->getVal() << " (" << intBkg->getVal()*work.var("bkg_ev")->getVal()/4. << " ev/GeV)" << endl;
+  
+  result.push_back( intSig->getVal()*work.var("tth_ev")->getVal() );
+  result.push_back( intBkg->getVal()*work.var("bkg_ev")->getVal() );
   
   work.defineSet("poi", "tth_ev");
   
@@ -83,7 +101,7 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   work.pdf("bkg")->plotOn(massbkg_frame);
   massbkg_frame -> SetTitle("m_{#gamma#gamma} background");
   massbkg_frame -> Draw();
-  std::string title_ = ("Bkg_" + title + std::to_string(i) + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
+  std::string title_ = ("bkg_" + title + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
   
   c3 -> SaveAs((TString)("c_" +title_ + ".png"));
   c3 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -95,7 +113,7 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   work.pdf("signal")->plotOn(masssignal_frame);
   masssignal_frame -> SetTitle("m_{#gamma#gamma} signal");
   masssignal_frame -> Draw();
-  title_ = ("Signal" + title + std::to_string(i) + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
+  title_ = ("sig_" + title + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
   
   c4 -> SaveAs((TString)("c_" +title_ + ".png"));
   c4 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -110,7 +128,7 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   work.pdf("model")->plotOn(massfit_frame, Components(*work.pdf("bkg")), LineStyle(kDashed));
   massfit_frame -> SetTitle("m_{#gamma#gamma} signal+background");
   massfit_frame -> Draw();
-  title_ = ("SignalBkg" + title + std::to_string(i) + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
+  title_ = ("sig_bkg_" + title + "_mvaMin_" + Form("%.2f",mvaMin)).c_str();
   
   c5 -> SaveAs((TString)("c_" +title_ + ".png"));
   c5 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -135,7 +153,7 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   leg3 -> AddEntry("l1", "Signal + bkg", "l");
   leg3 -> AddEntry("l2", "bkg only", "l");
   leg3 -> Draw();
-  title_ = ("Asimov" + title + std::to_string(i) + "_mvaMin" + Form("%.2f",mvaMin)).c_str();
+  title_ = ("asimov_" + title + "_mvaMin" + Form("%.2f",mvaMin)).c_str();
   
   c6 -> SaveAs((TString)("c_" +title_ + ".png"));
   c6 -> SaveAs((TString)("c_" +title_ + ".pdf"));
@@ -157,6 +175,7 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
   if( hypo == 0 )
   {
     cout << "Fit failed" << endl;
+    result.push_back(-1.);
   }  
   else
   {
@@ -164,11 +183,11 @@ float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int 
     // work.var("mass_") -> setRange("Integral", 120., 130. ) ;
     // RooAbsReal* intPdf = work.pdf("model")-> createIntegral(*(work.var("mass_")), *(work.var("mass_")), "Integral");
     // cout << "Background in 120-130 GeV: " << intPdf->getVal()*work.var("bkg_ev")->getVal() << " (" << intPdf->getVal()*work.var("bkg_ev")->getVal()/10. << " ev/GeV)" << endl;
-    
-    significance = hypo->Significance();
+
+    result.push_back( hypo->Significance() );
   }
   
-  return significance;
+  return result;
 }
 
 

@@ -4,6 +4,9 @@
 
 void InitTreeVars(TChain* chain, TreeVars& treeVars)
 {
+  chain -> SetBranchAddress("run", &treeVars.run);
+  chain -> SetBranchAddress("event", &treeVars.event);
+  
   chain -> SetBranchAddress("nvtx", &treeVars.nvtx);
   chain -> SetBranchAddress("weight", &treeVars.weight);
   
@@ -51,7 +54,7 @@ void InitTreeVars(TChain* chain, TreeVars& treeVars)
     chain -> SetBranchAddress(("jet_bdiscriminantDeep"+ std::to_string(i)).c_str(), &treeVars.jet_bdiscriminant[i-1]);
   }
   
-  for(int i=1; i<3; i++)
+  for(int i=1; i<=2; i++)
   {
     chain -> SetBranchAddress(("mu_pt"+ std::to_string(i)).c_str(), &treeVars.mu_pt[i-1]);
     chain -> SetBranchAddress(("mu_eta"+ std::to_string(i)).c_str(), &treeVars.mu_eta[i-1]);

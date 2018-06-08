@@ -12,6 +12,9 @@
 /*** tree variables ***/
 struct TreeVars
 {
+  unsigned int run;
+  unsigned long long int event;
+  
   int nvtx;
   float weight;
   
@@ -57,33 +60,33 @@ struct TreeVars
   float jet_phi[9];
   float jet_bdiscriminant[9];
   
-  float mu_pt[2];
-  float mu_eta[2];
-  float mu_phi[2];
-  float mu_energy[2];
-  float mu_IDVector[2][2];
-  float mu_miniIso[2];
-  float mu_trackIso[2];
-  float mu_charge[2];
-  float mu_sumChargedHadronPt[2];
-  float mu_sumNeutralHadronEt[2];
-  float mu_sumPhotonEt[2];
-  float mu_sumPUPt[2];
-  float ele_pt[2];
-  float ele_eta[2];
-  float ele_phi[2];
-  float ele_energy[2];
-  float ele_IDVector[2][10];
-  float ele_miniIso[2];
-  float ele_ecalEnergy[2];
-  float ele_SCx[2];
-  float ele_SCy[2];
-  float ele_SCz[2];
-  float ele_charge[2];
-  float ele_SCeta[2];
-  float ele_SCphi[2];
-  float ele_dEtaTrk[2];
-  float ele_dPhiTrk[2];
+  float mu_pt[6];
+  float mu_eta[6];
+  float mu_phi[6];
+  float mu_energy[6];
+  float mu_IDVector[6][2];
+  float mu_miniIso[6];
+  float mu_trackIso[6];
+  float mu_charge[6];
+  float mu_sumChargedHadronPt[6];
+  float mu_sumNeutralHadronEt[6];
+  float mu_sumPhotonEt[6];
+  float mu_sumPUPt[6];
+  float ele_pt[6];
+  float ele_eta[6];
+  float ele_phi[6];
+  float ele_energy[6];
+  float ele_IDVector[6][10];
+  float ele_miniIso[6];
+  float ele_ecalEnergy[6];
+  float ele_SCx[6];
+  float ele_SCy[6];
+  float ele_SCz[6];
+  float ele_charge[6];
+  float ele_SCeta[6];
+  float ele_SCphi[6];
+  float ele_dEtaTrk[6];
+  float ele_dPhiTrk[6];
 };
   
 void InitTreeVars(TChain* chain, TreeVars& treeVars);

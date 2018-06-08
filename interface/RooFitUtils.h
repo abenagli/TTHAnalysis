@@ -40,7 +40,7 @@ using namespace RooFit;
 
 
 
-float makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, int i, bool usePowerLaw=0, bool useSingleExp=0);
+std::vector<float> makeFits(RooDataSet* tth, RooDataSet* cs, float mvaMin, string title, bool usePowerLaw=0, bool useSingleExp=0, const bool doSidebandFit = false);
 
 float makeFitSimulataneous(RooDataSet* tth1, RooDataSet* ds1, RooDataSet* tth2, RooDataSet* ds2, string title, bool usePowerLaw=0, bool useSingleExp=0);
 

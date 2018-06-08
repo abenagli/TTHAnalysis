@@ -605,7 +605,7 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool&
 
 
 
-bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat, const ControlSampleType& csType)
+bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat, const ControlSampleType& csType, const bool& verbosity)
 {
   if( csType == kInvertLeptons && type == -2 )
   {
@@ -636,78 +636,57 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
   
   
   std::vector<int> goodLeptons;
+  int nLep = 2;
   
-  if(treeVars.mu_pt[0]>10.)
-  {
-    if(treeVars.mu_IDVector[0][diMuFirstID])
-      goodLeptons.push_back(0);
-  }
-      
-  if(treeVars.mu_pt[1]>10.)
-  {
-    if(treeVars.mu_IDVector[1][diMuSecondID])
-      goodLeptons.push_back(1);
-  }
-      
-  if(treeVars.ele_pt[0]>10.)
-  {
-    if(treeVars.ele_IDVector[0][diEleFirstID])
-      goodLeptons.push_back(2);
-  }
-      
-  if(treeVars.ele_pt[1]>10.)
-  {
-    if(treeVars.ele_IDVector[1][diEleSecondID])
-      goodLeptons.push_back(3);
-  }
+  for(int ii = 0; ii < nLep; ++ii)
+    if( treeVars.mu_pt[0] > 10. && treeVars.mu_IDVector[ii][diMuFirstID] == 1 )
+      goodLeptons.push_back(ii);
   
-  // for(unsigned int ii = 0; ii < goodLeptons.size(); ++ii)
-  //   std::cout << "goodLeptons[" << ii << "] = " << goodLeptons.at(ii) << std::endl;
+  for(int ii = 0; ii < nLep; ++ii)
+    if( treeVars.ele_pt[ii] > 10. && treeVars.ele_IDVector[ii][diEleFirstID] )
+      goodLeptons.push_back(nLep+ii);
   
+  if( verbosity )
+    for(unsigned int ii = 0; ii < goodLeptons.size(); ++ii)
+      std::cout << "goodLeptons[" << ii << "] = " << goodLeptons.at(ii) << std::endl;
+  
+  // the di photon
+  TLorentzVector ph1, ph2;
+  ph1.SetPtEtaPhiE(treeVars.dipho_leadPt,    treeVars.dipho_leadEta,    treeVars.dipho_leadPhi,    treeVars.dipho_leadEnergy);
+  ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
+  
+  // select lepton pairs
   std::vector<std::pair<int,int> > selectedPairs;
-      
   for(unsigned int l1Count = 0; l1Count < goodLeptons.size(); ++l1Count)
   {
     for(unsigned int l2Count = l1Count+1; l2Count < goodLeptons.size(); ++l2Count)
     {
-      if( goodLeptons[l1Count] == 0 && goodLeptons[l2Count] == 1 ) //dimuons
+      int id1 = goodLeptons[l1Count]%nLep;
+      int id2 = goodLeptons[l2Count]%nLep;
+      
+      if( goodLeptons[l1Count] < nLep && goodLeptons[l2Count] < nLep ) // di-mu
       {
-        //dr selections, isolation, Z mass veto
-            
         TLorentzVector mu1, mu2;
-        mu1.SetPtEtaPhiE(treeVars.mu_pt[0], treeVars.mu_eta[0], treeVars.mu_phi[0], treeVars.mu_energy[0]);
-        mu2.SetPtEtaPhiE(treeVars.mu_pt[1], treeVars.mu_eta[1], treeVars.mu_phi[1], treeVars.mu_energy[1]);
-            
-        TLorentzVector ph1, ph2;
-        ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
-        ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
-            
-        //float iso0 = mu_sumChargedHadronPt[0] + max(0., mu_sumNeutralHadronEt[0] + mu_sumPhotonEt[0] - 0.5*mu_sumPUPt[0]);
-        //float iso1 = mu_sumChargedHadronPt[1] + max(0., mu_sumNeutralHadronEt[1] + mu_sumPhotonEt[1] - 0.5*mu_sumPUPt[1]);
-            
-        bool passDiMuonSelection = DiMuSelections(mu1, mu2, treeVars.mu_charge[0], treeVars.mu_charge[1], ph1, ph2, treeVars.mu_miniIso[0], treeVars.mu_miniIso[1]);
+        mu1.SetPtEtaPhiE(treeVars.mu_pt[id1], treeVars.mu_eta[id1], treeVars.mu_phi[id1], treeVars.mu_energy[id1]);
+        mu2.SetPtEtaPhiE(treeVars.mu_pt[id2], treeVars.mu_eta[id2], treeVars.mu_phi[id2], treeVars.mu_energy[id2]);
+        
+        bool passDiMuonSelection = DiMuSelections(mu1, mu2, treeVars.mu_charge[id1], treeVars.mu_charge[id2], ph1, ph2, treeVars.mu_miniIso[id1], treeVars.mu_miniIso[id2]);
         if( !passDiMuonSelection ) continue;
-            
+        
         std::pair<int,int> leptons(goodLeptons[l1Count],goodLeptons[l2Count]);
         selectedPairs.push_back(leptons);
       }
       
-      else if( goodLeptons[l1Count] == 2 && goodLeptons[l2Count] == 3 ) //diele
+      else if( goodLeptons[l1Count] >= nLep && goodLeptons[l2Count] >= nLep ) // di-ele
       {
-        //dr selections, isolation, Z mass veto
-        
         TLorentzVector ele1, ele2;
-        ele1.SetPtEtaPhiE(treeVars.ele_pt[0], treeVars.ele_eta[0], treeVars.ele_phi[0], treeVars.ele_energy[0]);
-        ele2.SetPtEtaPhiE(treeVars.ele_pt[1], treeVars.ele_eta[1], treeVars.ele_phi[1], treeVars.ele_energy[1]);
-            
-        TLorentzVector ph1, ph2;
-        ph1.SetPtEtaPhiE(treeVars.dipho_leadPt,    treeVars.dipho_leadEta,    treeVars.dipho_leadPhi,    treeVars.dipho_leadEnergy);
-        ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
+        ele1.SetPtEtaPhiE(treeVars.ele_pt[id1], treeVars.ele_eta[id1], treeVars.ele_phi[id1], treeVars.ele_energy[id1]);
+        ele2.SetPtEtaPhiE(treeVars.ele_pt[id2], treeVars.ele_eta[id2], treeVars.ele_phi[id2], treeVars.ele_energy[id2]);
         
-        float dTrk1 = sqrt(treeVars.ele_dEtaTrk[0]*treeVars.ele_dEtaTrk[0] + treeVars.ele_dPhiTrk[0]*treeVars.ele_dPhiTrk[0]);
-        float dTrk2 = sqrt(treeVars.ele_dEtaTrk[1]*treeVars.ele_dEtaTrk[1] + treeVars.ele_dPhiTrk[1]*treeVars.ele_dPhiTrk[1]);
+        float dTrk1 = sqrt(treeVars.ele_dEtaTrk[id1]*treeVars.ele_dEtaTrk[id1] + treeVars.ele_dPhiTrk[id1]*treeVars.ele_dPhiTrk[id1]);
+        float dTrk2 = sqrt(treeVars.ele_dEtaTrk[id2]*treeVars.ele_dEtaTrk[id2] + treeVars.ele_dPhiTrk[id2]*treeVars.ele_dPhiTrk[id2]);
         
-        bool passDiEleSelection = DiEleSelections(ele1, ele2, treeVars.ele_charge[0], treeVars.ele_charge[1], ph1, ph2, treeVars.ele_miniIso[0], treeVars.ele_miniIso[1], dTrk1, dTrk2);
+        bool passDiEleSelection = DiEleSelections(ele1, ele2, treeVars.ele_charge[id1], treeVars.ele_charge[id2], ph1, ph2, treeVars.ele_miniIso[id1], treeVars.ele_miniIso[id2], dTrk1, dTrk2);
         if( !passDiEleSelection ) continue;
         
         std::pair<int,int> leptons(goodLeptons[l1Count],goodLeptons[l2Count]);
@@ -716,20 +695,18 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
       
       else //mixed
       {
-        //dr selections, isolation
-            
-        int muIndex = goodLeptons[l1Count] == 0 ? 0 : 1;
-        int eleIndex = goodLeptons[l2Count] == 2 ? 0 : 1;
+        int muIndex = id1;
+        int eleIndex = id2;
+        if( goodLeptons[l1Count] >= nLep && goodLeptons[l2Count] < nLep )
+        {
+          muIndex = id2;
+          eleIndex = id1;
+        }
         
         TLorentzVector mu1, ele1;
-        
-        TLorentzVector ph1, ph2;
-        ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
-        ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
-            
         mu1.SetPtEtaPhiE(treeVars.mu_pt[muIndex], treeVars.mu_eta[muIndex], treeVars.mu_phi[muIndex], treeVars.mu_energy[muIndex]);
         ele1.SetPtEtaPhiE(treeVars.ele_pt[eleIndex], treeVars.ele_eta[eleIndex], treeVars.ele_phi[eleIndex], treeVars.ele_energy[eleIndex]);
-            
+        
         bool passMixedSelection = MixedSelections(mu1, ele1, treeVars.mu_charge[muIndex], treeVars.ele_charge[eleIndex], ph1, ph2);
         if( !passMixedSelection || !treeVars.mu_IDVector[muIndex][mixedMuID] || !treeVars.ele_IDVector[eleIndex][mixedEleID] ) continue;
             
@@ -741,9 +718,14 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
   
   bool accept = false;
   
-  // std::cout << "selectedPairs: " << selectedPairs.size() << std::endl;
+  if( verbosity )
+    std::cout << "selectedPairs: " << selectedPairs.size() << std::endl;
+  
   for(unsigned int j = 0; j < selectedPairs.size(); ++j)
   {
+    int id1 = (selectedPairs[j].first)%nLep;
+    int id2 = (selectedPairs[j].second)%nLep;
+    
     int njet = 0;
     int nbjet_loose = 0;
     int nbjet_medium = 0;
@@ -752,26 +734,34 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
     
     for(int jIndex = 0; jIndex < 6; ++jIndex)
     {
-      if(treeVars.jet_pt[jIndex]>25. && abs(treeVars.jet_eta[jIndex])<2.4)
+      if( treeVars.jet_pt[jIndex] > 25. && fabs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
         float DR1 = -999.;
         float DR2 = -999.;
-        if(selectedPairs[j].first==0 && selectedPairs[j].second==1)
+        if( selectedPairs[j].first < nLep && selectedPairs[j].second < nLep )
         {
-          DR1 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[0], treeVars.mu_phi[0]);
-          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[1], treeVars.mu_phi[1]);
+          DR1 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[id1], treeVars.mu_phi[id1]);
+          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[id1], treeVars.mu_phi[id2]);
           cat = DiMuon;
         }
-        else if(selectedPairs[j].first==2 && selectedPairs[j].second==3)
+        else if( selectedPairs[j].first >= nLep && selectedPairs[j].second >= nLep )
         {
-          DR1 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[0], treeVars.ele_phi[0]);
-          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[1], treeVars.ele_phi[1]);
+          DR1 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[id1], treeVars.ele_phi[id1]);
+          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[id2], treeVars.ele_phi[id2]);
           cat = DiElectron;
         }
         else
         {
-          DR1 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[selectedPairs[j].first], treeVars.mu_phi[selectedPairs[j].first]);
-          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[selectedPairs[j].second-2], treeVars.ele_phi[selectedPairs[j].second-2]);
+          int muIndex = id1;
+          int eleIndex = id2;
+          if( selectedPairs[j].first >= nLep && selectedPairs[j].second < nLep )
+          {
+            muIndex = id2;
+            eleIndex = id1;
+          }
+          
+          DR1 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[muIndex], treeVars.mu_phi[muIndex]);
+          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[eleIndex], treeVars.ele_phi[eleIndex]);
           cat = Mixed;
         }
         
@@ -810,7 +800,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
 
 
 
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType)
+bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType, const bool& verbosity)
 {
   if( csType == kInvertLeptons && type == -2 )
   {
@@ -962,7 +952,7 @@ bool CutBasedSelection(const TreeVars& treeVars,
 {
   if( treeVars.dipho_lead_ptoM < min_lead_ptoM || treeVars.dipho_sublead_ptoM < min_sublead_ptoM ) return false;
   if( treeVars.dipho_leadIDMVA < min_leadIDMVA || treeVars.dipho_subleadIDMVA < min_subleadIDMVA ) return false;
-  // if( treeVars.dipho_deltaphi > max_deltaphi ) return false;
+  if( treeVars.dipho_deltaphi > max_deltaphi ) return false;
   if( fabs( treeVars.dipho_leadEta - treeVars.dipho_subleadEta ) > max_deltaeta ) return false;
   
   return true;

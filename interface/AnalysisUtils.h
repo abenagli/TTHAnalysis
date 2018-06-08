@@ -52,8 +52,8 @@ bool SingleMuSelections(TLorentzVector mu1,  TLorentzVector ph1, TLorentzVector 
 bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float iso, float drTrk);
 
 bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType = kNull);
-bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat, const ControlSampleType& csType = kNull);
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType = kNull);
+bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat, const ControlSampleType& csType = kNull, const bool& verbosity = false);
+bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType = kNull, const bool& verbosity = false);
 
 bool CutBasedSelection(const TreeVars& treeVars,
                        const float& min_lead_ptoM, const float& min_sublead_ptoM,
