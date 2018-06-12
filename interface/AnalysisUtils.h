@@ -20,16 +20,14 @@
 #define bDiscriminantThresholdMedium 0.4941
 #define bDiscriminantThresholdTight  0.8001
 
-#define oneCatMuID   1  // 0=Loose, 1=Medium
-#define singleMuID   1  // 0=Loose, 1=Medium
-#define diMuFirstID  1  // 0=Loose, 1=Medium
-#define diMuSecondID 1  // 0=Loose, 1=Medium
-#define oneCatEleID   5 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
-#define singleEleID   5 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
-#define diEleFirstID  4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
-#define diEleSecondID 4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
-#define mixedMuID  1 // 0=Loose, 1=Medium
-#define mixedEleID 4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define oneCatMuID   1 // 0=Loose, 1=Medium, 2=tight
+#define singleMuID   1 // 0=Loose, 1=Medium, 2=tight
+#define diMuID       1 // 0=Loose, 1=Medium, 2=tight
+#define mixedMuID    1 // 0=Loose, 1=Medium, 2=tight
+#define oneCatEleID  5 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define singleEleID  5 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define diEleID      4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
+#define mixedEleID   4 // 0=Veto,  1=Loose, 2=Medium, 3= Tight, 4=MVALoose, 5=MVAMedium, 6=MVATight, 7=MVALooseNoIso, 8=MVAMediumNoIso, 9=MVATightNoIso
 
 enum DiLeptonCategories { None, DiMuon, DiElectron, Mixed };
 
@@ -53,7 +51,10 @@ bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector
 
 bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType = kNull);
 bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat, const ControlSampleType& csType = kNull, const bool& verbosity = false);
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType = kNull, const bool& verbosity = false);
+bool SingleLeptonSelection(const TreeVars& treeVars, const int& type,
+                           const int& nJetMin, const float& leadJetPtMin, const int& nBTagLooseJetMin, const int& nBTagMediumJetMin, const int& nBTagTightJetMin, 
+                           const ControlSampleType& csType = kNull, const bool& verbosity = false,
+                           std::vector<int>* goodMu = NULL, std::vector<int>* goodEle = NULL, std::vector<int>* goodJet = NULL);
 
 bool CutBasedSelection(const TreeVars& treeVars,
                        const float& min_lead_ptoM, const float& min_sublead_ptoM,

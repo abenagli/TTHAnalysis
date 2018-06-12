@@ -76,7 +76,8 @@ int main(int argc, char** argv)
   
   for(long int ii = 0; ii < nEntries; ++ii)
   {
-    if( ii%1000 == 0 ) std::cout << ">>> Reading entry " << ii << " / " << nEntries << "\r" << std::flush;
+    if( ii%10000 == 0 ) std::cout << ">>> Reading entry " << std::setw(8) << ii << " / " << std::setw(8) << nEntries
+                                  << " (" << std::fixed << std::setprecision(1) << std::setw(5) << 100.*ii/nEntries << "\%)" << "\r" << std::flush;
     t -> GetEntry(ii);
     
     bool accepted = true;

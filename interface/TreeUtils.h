@@ -7,12 +7,16 @@
 
 #include "TChain.h"
 
+#define nLep 8
+#define nJet 10
+
 
 
 /*** tree variables ***/
 struct TreeVars
 {
   unsigned int run;
+  unsigned int lumi;
   unsigned long long int event;
   
   int nvtx;
@@ -33,6 +37,7 @@ struct TreeVars
   float dipho_lead_ptoM;
   float dipho_lead_sigmaEoE;
   float dipho_leadIDMVA;
+  float dipho_lead_PSV;
   float dipho_subleadPt;
   float dipho_subleadEta;
   float dipho_subleadPhi;
@@ -41,6 +46,7 @@ struct TreeVars
   float dipho_sublead_ptoM;
   float dipho_sublead_sigmaEoE;
   float dipho_subleadIDMVA;
+  float dipho_sublead_PSV;
   float dipho_mva;
   float dipho_mva_training2016_best;
   float dipho_mva_training2017_v1;
@@ -55,41 +61,67 @@ struct TreeVars
   float nJets_bTagMedium;
   float nJets_bTagTight;
   
-  float jet_pt[9];
-  float jet_eta[9];
-  float jet_phi[9];
-  float jet_bdiscriminant[9];
+  float jet_pt[nJet];
+  float jet_eta[nJet];
+  float jet_phi[nJet];
+  float jet_bdiscriminant[nJet];
   
-  float mu_pt[6];
-  float mu_eta[6];
-  float mu_phi[6];
-  float mu_energy[6];
-  float mu_IDVector[6][2];
-  float mu_miniIso[6];
-  float mu_trackIso[6];
-  float mu_charge[6];
-  float mu_sumChargedHadronPt[6];
-  float mu_sumNeutralHadronEt[6];
-  float mu_sumPhotonEt[6];
-  float mu_sumPUPt[6];
-  float ele_pt[6];
-  float ele_eta[6];
-  float ele_phi[6];
-  float ele_energy[6];
-  float ele_IDVector[6][10];
-  float ele_miniIso[6];
-  float ele_ecalEnergy[6];
-  float ele_SCx[6];
-  float ele_SCy[6];
-  float ele_SCz[6];
-  float ele_charge[6];
-  float ele_SCeta[6];
-  float ele_SCphi[6];
-  float ele_dEtaTrk[6];
-  float ele_dPhiTrk[6];
+  float mu_pt[nLep];
+  float mu_eta[nLep];
+  float mu_phi[nLep];
+  float mu_energy[nLep];
+  float mu_IDVector[nLep][3];
+  float mu_miniIso[nLep];
+  float mu_trackIso[nLep];
+  float mu_charge[nLep];
+  float mu_sumChargedHadronPt[nLep];
+  float mu_sumNeutralHadronEt[nLep];
+  float mu_sumPhotonEt[nLep];
+  float mu_sumPUPt[nLep];
+  float ele_pt[nLep];
+  float ele_eta[nLep];
+  float ele_phi[nLep];
+  float ele_energy[nLep];
+  float ele_IDVector[nLep][10];
+  float ele_miniIso[nLep];
+  float ele_ecalEnergy[nLep];
+  float ele_SCx[nLep];
+  float ele_SCy[nLep];
+  float ele_SCz[nLep];
+  float ele_charge[nLep];
+  float ele_SCeta[nLep];
+  float ele_SCphi[nLep];
+  float ele_dEtaTrk[nLep];
+  float ele_dPhiTrk[nLep];
+  
+  float mu1_pt;
+  float mu1_eta;
+  float mu2_pt;
+  float mu2_eta;
+  float ele1_pt;
+  float ele1_eta;
+  float ele2_pt;
+  float ele2_eta;
+  float jet1_pt;
+  float jet1_eta;
+  float jet1_bTag;
+  float jet2_pt;
+  float jet2_eta;
+  float jet2_bTag;
+  float jet3_pt;
+  float jet3_eta;
+  float jet3_bTag;
+  float jet4_pt;
+  float jet4_eta;
+  float jet4_bTag;
+  float bTag1;
+  float bTag2;
+  float bTag3;
+  float bTag4;
 };
   
 void InitTreeVars(TChain* chain, TreeVars& treeVars);
-void InitOutTreeVars(TTree* tree, TreeVars& treeVars);
+void InitOutTree(TTree* tree, TreeVars& treeVars);
+void InitOutTreeVars(TreeVars& treeVars);
 
 #endif

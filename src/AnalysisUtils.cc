@@ -34,7 +34,7 @@ bool DiMuSelections(TLorentzVector mu1, TLorentzVector mu2, float charge1, float
   
   if( fabs(mu1.Eta()) > 2.4 ) return 0;
   if( fabs(mu2.Eta()) > 2.4 ) return 0;
-
+  
   if( fabs((mu1+mu2).M() - MZ) < 5. ) return 0;
   
   if( DeltaR( ph1.Eta(), ph1.Phi(), mu1.Eta(), mu1.Phi() ) < 0.2 ) return 0;
@@ -63,10 +63,10 @@ bool DiEleSelections(TLorentzVector ele1, TLorentzVector ele2, float charge1, fl
   if( fabs(ele2.Eta())>2.5 || ( fabs(ele2.Eta())>1.4442 && fabs(ele2.Eta())<1.566) ) return 0;
   
   if( fabs((ele1+ele2).M() - MZ) < 5. ) return 0;
-  // if( fabs((ph1+ele1).M()  - MZ) < 5. ) return 0;
-  // if( fabs((ph1+ele2).M()  - MZ) < 5. ) return 0;
-  // if( fabs((ph2+ele1).M()  - MZ) < 5. ) return 0;
-  // if( fabs((ph2+ele2).M()  - MZ) < 5. ) return 0;
+  if( fabs((ph1+ele1).M()  - MZ) < 5. ) return 0;
+  if( fabs((ph1+ele2).M()  - MZ) < 5. ) return 0;
+  if( fabs((ph2+ele1).M()  - MZ) < 5. ) return 0;
+  if( fabs((ph2+ele2).M()  - MZ) < 5. ) return 0;
   
   if( DeltaR( ph1.Eta(), ph1.Phi(), ele1.Eta(), ele1.Phi() ) < 0.2 ) return 0;
   if( DeltaR( ph1.Eta(), ph1.Phi(), ele2.Eta(), ele2.Phi() ) < 0.2 ) return 0;
@@ -108,14 +108,14 @@ bool MixedSelections(TLorentzVector mu, TLorentzVector ele, float charge1, float
 
 bool SingleMuSelections(TLorentzVector mu1,  TLorentzVector ph1, TLorentzVector ph2, float iso)
 {
-  if( mu1.Pt() < 10. ) return 0;
+  if( mu1.Pt() < 5. ) return 0;
   
   if( fabs(mu1.Eta()) > 2.4 ) return 0;
   
   if( DeltaR( ph1.Eta(), ph1.Phi(), mu1.Eta(), mu1.Phi() ) < 0.2 ) return 0;
   if( DeltaR( ph2.Eta(), ph2.Phi(), mu1.Eta(), mu1.Phi() ) < 0.2 ) return 0;
   
-  if( iso > 0.1 ) return 0;
+  if( iso > 0.20 ) return 0;
   
   return 1;
 }
@@ -123,17 +123,17 @@ bool SingleMuSelections(TLorentzVector mu1,  TLorentzVector ph1, TLorentzVector 
 
 bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector ph2, float iso, float drTrk)
 {
-  if( ele1.Pt() < 20. ) return 0;
+  if( ele1.Pt() < 10. ) return 0;
+  
   if( fabs(ele1.Eta()) > 2.5 || ( fabs(ele1.Eta()) > 1.4442 && fabs(ele1.Eta()) < 1.566 ) )  return 0;
+  
   if( DeltaR( ph1.Eta(), ph1.Phi(), ele1.Eta(), ele1.Phi() ) < 0.2 ) return 0;
   if( DeltaR( ph2.Eta(), ph2.Phi(), ele1.Eta(), ele1.Phi() ) < 0.2 ) return 0;
   
   if( fabs((ph1+ele1).M() - MZ) < 5. ) return 0;
   if( fabs((ph2+ele1).M() - MZ) < 5. ) return 0;
   
-  // if((abs(ele1.Eta())<= 1.479 && iso > 0.045) || (abs(ele1.Eta())> 1.479 && iso > 0.08)) return 0;
-  
-  if( drTrk > 0.35 ) return 0;
+  // if( drTrk > 0.35 ) return 0;
   
   return 1;
 }
@@ -615,7 +615,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
     int nbjet_tight = 0;
     float jetPtMax = -999.;
     
-    for(int jIndex = 0; jIndex < 6; ++jIndex)
+    for(int jIndex = 0; jIndex < nJet; ++jIndex)
     {
       if( treeVars.jet_pt[jIndex] > 25. && fabs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
@@ -628,7 +628,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
       }
     }
     
-    if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && (nbjet_loose >= 2 || nbjet_medium >= 1) ) || (!bTagSelection && nbjet_loose == 0) ) )
+    if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
       return true;
     else
       return false;
@@ -636,14 +636,13 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
   
   
   std::vector<int> goodLeptons;
-  int nLep = 2;
   
   for(int ii = 0; ii < nLep; ++ii)
-    if( treeVars.mu_pt[0] > 10. && treeVars.mu_IDVector[ii][diMuFirstID] == 1 )
+    if( treeVars.mu_pt[0] > 10. && treeVars.mu_IDVector[ii][diMuID] == 1 )
       goodLeptons.push_back(ii);
   
   for(int ii = 0; ii < nLep; ++ii)
-    if( treeVars.ele_pt[ii] > 10. && treeVars.ele_IDVector[ii][diEleFirstID] )
+    if( treeVars.ele_pt[ii] > 10. && treeVars.ele_IDVector[ii][diEleID] )
       goodLeptons.push_back(nLep+ii);
   
   if( verbosity )
@@ -732,7 +731,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
     int nbjet_tight = 0;
     float jetPtMax = -999.;
     
-    for(int jIndex = 0; jIndex < 6; ++jIndex)
+    for(int jIndex = 0; jIndex < nJet; ++jIndex)
     {
       if( treeVars.jet_pt[jIndex] > 25. && fabs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
@@ -741,7 +740,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
         if( selectedPairs[j].first < nLep && selectedPairs[j].second < nLep )
         {
           DR1 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[id1], treeVars.mu_phi[id1]);
-          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[id1], treeVars.mu_phi[id2]);
+          DR2 = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[id2], treeVars.mu_phi[id2]);
           cat = DiMuon;
         }
         else if( selectedPairs[j].first >= nLep && selectedPairs[j].second >= nLep )
@@ -765,6 +764,9 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
           cat = Mixed;
         }
         
+        if( verbosity )
+          std::cout << "jet " << jIndex << ":   pt: " << treeVars.jet_pt[jIndex] << "   DR1 (>0.4): " << DR1 << "   DR2 (>0.4): " << DR2 << std::endl;
+        
         if( DR1 < 0.4 || DR2 < 0.4 ) continue;
         
         ++njet;
@@ -779,7 +781,10 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
     
     if( type != -2 )
     {
-      if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && (nbjet_loose >= 2 || nbjet_medium >= 1) ) || (!bTagSelection && nbjet_loose == 0) ) )
+      if( verbosity )
+        std::cout << "nJet (>1): " << njet << "   jetPtMax (>50): " << jetPtMax << "   nbjet_medium (>1): " <<nbjet_medium << std::endl;
+      
+      if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
       {
         accept = true;
         break;
@@ -787,7 +792,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
     }
     else if( csType == kInvertBTag )
     {
-      if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && (nbjet_loose < 2 && nbjet_medium < 1) ) || (!bTagSelection && nbjet_loose == 0) ) )
+      if( njet >= 1 && jetPtMax > 50. && ( (bTagSelection && nbjet_medium < 1) || (!bTagSelection && nbjet_loose == 0) ) )
       {
         accept = true;
         break;
@@ -800,7 +805,11 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
 
 
 
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType, const bool& verbosity)
+bool SingleLeptonSelection(const TreeVars& treeVars, const int& type,
+                           const int& nJetMin, const float& leadJetPtMin, const int& nBTagLooseJetMin, const int& nBTagMediumJetMin, const int& nBTagTightJetMin,
+                           const ControlSampleType& csType, const bool& verbosity,
+                           std::vector<int>* goodMu, std::vector<int>* goodEle, std::vector<int>* goodJet)
+
 {
   if( csType == kInvertLeptons && type == -2 )
   {
@@ -810,7 +819,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool
     int nbjet_tight = 0;
     float jetPtMax = -999.;
     
-    for(int jIndex = 0; jIndex < 6; ++jIndex)
+    for(int jIndex = 0; jIndex < nJet; ++jIndex)
     {
       if( treeVars.jet_pt[jIndex] > 25. && fabs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
@@ -823,78 +832,60 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool
       }
     }
     
-    if( njet >= 3 && treeVars.jet_pt[0] > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
+    if( njet >= nJetMin && jetPtMax > leadJetPtMin && nbjet_loose >= nBTagLooseJetMin && nbjet_medium >= nBTagMediumJetMin && nbjet_tight >= nBTagTightJetMin )
       return true;
     else
       return false;
   }
   
   
+  // define the diphoton
+  TLorentzVector ph1, ph2;
+  ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
+  ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
+  
+  
+  // select the leptons
   std::vector<int> goodLeptons;
   
-  if(treeVars.mu_pt[0]>10.)
+  for(int ii = 0; ii < nLep; ++ii)
   {
+    if( treeVars.mu_IDVector[ii][singleMuID] != 1 ) continue;
+    
     TLorentzVector mu;
-    mu.SetPtEtaPhiE(treeVars.mu_pt[0], treeVars.mu_eta[0], treeVars.mu_phi[0], treeVars.mu_energy[0]);
+    mu.SetPtEtaPhiE(treeVars.mu_pt[ii], treeVars.mu_eta[ii], treeVars.mu_phi[ii], treeVars.mu_energy[ii]);
     
-    TLorentzVector ph1, ph2;
-    ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
-    ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
+    float iso = ( treeVars.mu_sumChargedHadronPt[ii] + std::max(0.,treeVars.mu_sumNeutralHadronEt[ii]+treeVars.mu_sumPhotonEt[ii]-0.5*treeVars.mu_sumPUPt[ii]) ) / treeVars.mu_pt[ii];
     
-    if(treeVars.mu_IDVector[0][singleMuID] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[0]))
-      goodLeptons.push_back(0);
+    if( SingleMuSelections(mu, ph1, ph2, iso) )
+    {
+      goodLeptons.push_back(ii);
+      if( goodMu ) goodMu -> push_back(ii);
+    }
   }
   
-  if(treeVars.mu_pt[1]>10.)
+  for(int ii = 0; ii < nLep; ++ii)
   {
-    TLorentzVector mu;
-    mu.SetPtEtaPhiE(treeVars.mu_pt[1], treeVars.mu_eta[1], treeVars.mu_phi[1], treeVars.mu_energy[1]);
+    if( treeVars.ele_IDVector[ii][singleEleID] != 1 ) continue;
     
-    TLorentzVector ph1, ph2;
-    ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
-    ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
-    
-    if(treeVars.mu_IDVector[1][singleMuID] && SingleMuSelections(mu, ph1, ph2, treeVars.mu_miniIso[1]))
-      goodLeptons.push_back(1);
-  }
-  
-  if(treeVars.ele_pt[0]>10.)
-  {
     TLorentzVector ele;
-    ele.SetPtEtaPhiE(treeVars.ele_pt[0], treeVars.ele_eta[0], treeVars.ele_phi[0], treeVars.ele_energy[0]);
+    ele.SetPtEtaPhiE(treeVars.ele_pt[ii], treeVars.ele_eta[ii], treeVars.ele_phi[ii], treeVars.ele_energy[ii]);
     
-    TLorentzVector ph1, ph2;
-    ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
-    ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
+    float dTrk = sqrt(treeVars.ele_dEtaTrk[ii]*treeVars.ele_dEtaTrk[ii] + treeVars.ele_dPhiTrk[ii]*treeVars.ele_dPhiTrk[ii]);
     
-    float dTrk = sqrt(treeVars.ele_dEtaTrk[0]*treeVars.ele_dEtaTrk[0] + treeVars.ele_dPhiTrk[0]*treeVars.ele_dPhiTrk[0]);
-    
-    bool passSingleEleSelection = SingleEleSelections(ele, ph1, ph2, treeVars.ele_miniIso[0], dTrk);
-    if(treeVars.ele_IDVector[0][singleEleID] && passSingleEleSelection)
-      goodLeptons.push_back(2);
+    if( SingleEleSelections(ele, ph1, ph2, treeVars.ele_miniIso[ii], dTrk) )
+    {
+      goodLeptons.push_back(nLep+ii);
+      if( goodEle ) goodEle -> push_back(ii);
+    }
   }
   
-  if(treeVars.ele_pt[1]>10.)
-  {
-    TLorentzVector ele;
-    ele.SetPtEtaPhiE(treeVars.ele_pt[1], treeVars.ele_eta[1], treeVars.ele_phi[1], treeVars.ele_energy[1]);
-    
-    TLorentzVector ph1, ph2;
-    ph1.SetPtEtaPhiE(treeVars.dipho_leadPt, treeVars.dipho_leadEta, treeVars.dipho_leadPhi, treeVars.dipho_leadEnergy);
-    ph2.SetPtEtaPhiE(treeVars.dipho_subleadPt, treeVars.dipho_subleadEta, treeVars.dipho_subleadPhi, treeVars.dipho_subleadEnergy);
-    
-    float dTrk = sqrt(treeVars.ele_dEtaTrk[1]*treeVars.ele_dEtaTrk[1] + treeVars.ele_dPhiTrk[1]*treeVars.ele_dPhiTrk[1]);
-    
-    bool passSingleEleSelection = SingleEleSelections(ele, ph1, ph2, treeVars.ele_miniIso[1], dTrk);
-    if(treeVars.ele_IDVector[1][singleEleID] && passSingleEleSelection)
-      goodLeptons.push_back(3);
-  }
+  if( verbosity )
+    for(unsigned int ii = 0; ii < goodLeptons.size(); ++ii)
+      std::cout << "goodLeptons[" << ii << "] = " << goodLeptons.at(ii) << std::endl;
+  
   
   bool accept = false;
-  
-  // std::cout << "good leptons: " << goodLeptons.size() << std::endl;
-  // for(unsigned int ii = 0; ii < goodLeptons.size(); ++ii)
-  //   std::cout << ">>> goodLepton[" << ii << "] = " << goodLeptons.at(ii) << std::endl;
   
   for(unsigned int j = 0; j < goodLeptons.size(); ++j)
   { 
@@ -902,16 +893,18 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool
     int nbjet_loose = 0;
     int nbjet_medium = 0;
     int nbjet_tight = 0;
+    float jetPtMax = -999.;
     
-    for(int jIndex = 0; jIndex < 6; ++jIndex)
+    for(int jIndex = 0; jIndex < nJet; ++jIndex)
     {
       if( treeVars.jet_pt[jIndex] > 25. && abs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
         float DR = -1.;
-        if( goodLeptons.at(j) ==0 ) DR = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[0], treeVars.mu_phi[0]);
-        if( goodLeptons.at(j) ==1 ) DR = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[1], treeVars.mu_phi[1]);
-        if( goodLeptons.at(j) ==2 ) DR = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[0], treeVars.ele_phi[0]);
-        if( goodLeptons.at(j) ==3 ) DR = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[1], treeVars.ele_phi[1]);
+        if( goodLeptons.at(j) < nLep ) DR = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.mu_eta[goodLeptons.at(j)], treeVars.mu_phi[goodLeptons.at(j)]);
+        else                           DR = DeltaR(treeVars.jet_eta[jIndex], treeVars.jet_phi[jIndex], treeVars.ele_eta[goodLeptons.at(j)-nLep], treeVars.ele_phi[goodLeptons.at(j)-nLep]);
+        
+        if( verbosity )
+          std::cout << "jet " << jIndex << ":   pt: " << treeVars.jet_pt[jIndex] << "   DR (>0.4): " << DR << std::endl;
         
         if( DR < 0.4 ) continue;
         
@@ -919,12 +912,20 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool
         if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nbjet_loose;
         if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nbjet_medium;
         if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nbjet_tight;
+        
+        if( treeVars.jet_pt[jIndex] > jetPtMax ) jetPtMax = treeVars.jet_pt[jIndex];
+        
+        if( goodJet ) goodJet -> push_back(jIndex);
       }
     }
     
+    
     if( type != -2 )
     {
-      if( njet >= 3 && treeVars.jet_pt[0] > 50. && ( (bTagSelection && nbjet_medium >= 1) || (!bTagSelection && nbjet_medium == 0) ) )
+      if( verbosity )
+        std::cout << "nJet: " << njet << "   jetPtMax: " << jetPtMax << "   nbjet_medium: " <<nbjet_medium << std::endl;
+      
+      if( njet >= nJetMin && jetPtMax > leadJetPtMin && nbjet_loose >= nBTagLooseJetMin && nbjet_medium >= nBTagMediumJetMin && nbjet_tight >= nBTagTightJetMin)
       {
         accept = true;
         break;
@@ -932,7 +933,7 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type, const bool
     }
     else if( csType == kInvertBTag )
     {
-      if( njet >= 3 && treeVars.jet_pt[0] > 50. && ( (bTagSelection && nbjet_medium < 1) || (!bTagSelection && nbjet_medium == 0) ) )
+      if( njet >= nJetMin && jetPtMax > leadJetPtMin && (nbjet_loose < nBTagLooseJetMin || nbjet_medium < nBTagMediumJetMin || nbjet_tight < nBTagTightJetMin) )
       {
         accept = true;
         break;

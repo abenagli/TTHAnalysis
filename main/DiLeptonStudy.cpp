@@ -1,4 +1,3 @@
-#include "CfgManager/interface/CfgManager.h"
 #include "CfgManager/interface/CfgManagerT.h"
 #include "interface/CMS_lumi.h"
 #include "interface/SetTDRStyle.h"
@@ -43,9 +42,15 @@ using namespace RooFit;
 bool verbosity = false;
 bool cutBased = true;
 
+bool doPlots = false;
+bool doROC = false;
+bool doFits = false;
+
 float lumi = 41.7;
 
 ControlSampleType csType = kInvertBTag;
+
+void PrintEvent(const TreeVars& treeVars);
 
 
 
@@ -185,120 +190,162 @@ int main(int argc, char* argv[])
     
     TFile* outFile = TFile::Open(Form("%s/plotTree_%s.root",outputNtupleFolder.c_str(),label.c_str()),"RECREATE");
     outFile -> cd();
-    TTree* outTree_1jet = new TTree("plotTree_1jet","plotTree_1jet");
-    TTree* outTree_diLepton = new TTree("plotTree_diLepton","plotTree_diLepton");
-    TTree* outTree_singleLepton = new TTree("plotTree_singleLepton","plotTree_singleLepton");
-    TTree* outTree_oneCategory = new TTree("plotTree_oneCategory","plotTree_oneCategory");
-    TTree* outTree_diLepton_noBTag = new TTree("plotTree_diLepton_noBTag","plotTree_diLepton_noBTag");
-    TTree* outTree_singleLepton_noBTag = new TTree("plotTree_singleLepton_noBTag","plotTree_singleLepton_noBTag");
-    TTree* outTree_oneCategory_noBTag = new TTree("plotTree_oneCategory_noBTag","plotTree_oneCategory_noBTag");
-    InitOutTreeVars(outTree_1jet,treeVars);
-    InitOutTreeVars(outTree_diLepton,treeVars);
-    InitOutTreeVars(outTree_singleLepton,treeVars);
-    InitOutTreeVars(outTree_oneCategory,treeVars);
-    InitOutTreeVars(outTree_diLepton_noBTag,treeVars);
-    InitOutTreeVars(outTree_singleLepton_noBTag,treeVars);
-    InitOutTreeVars(outTree_oneCategory_noBTag,treeVars);
+    TTree* outTree_commonCuts             = new TTree("plotTree_commonCuts",            "plotTree_commonCuts");
+    TTree* outTree_1bJet_phoIDMin         = new TTree("plotTree_1bJet_phoIDMin",        "plotTree_1bJet_phoIDMin");
+    TTree* outTree_1bJet_phoIDMin_1lepton = new TTree("plotTree_1bJet_phoIDMin_1lepton","plotTree_1bJet_phoIDMin_1lepton");
+    TTree* outTree_diLepton               = new TTree("plotTree_diLepton",              "plotTree_diLepton");
+    TTree* outTree_singleLepton           = new TTree("plotTree_singleLepton",          "plotTree_singleLepton");
+    TTree* outTree_oneCategory            = new TTree("plotTree_oneCategory",           "plotTree_oneCategory");
+    InitOutTree(outTree_commonCuts,treeVars);
+    InitOutTree(outTree_1bJet_phoIDMin,treeVars);
+    InitOutTree(outTree_1bJet_phoIDMin_1lepton,treeVars);
+    InitOutTree(outTree_diLepton,treeVars);
+    InitOutTree(outTree_singleLepton,treeVars);
+    InitOutTree(outTree_oneCategory,treeVars);
     
     
     int nEntries = tree->GetEntries();
     int nEntries_commonCuts = 0;
-    int nEntries_diphoMVACut = 0;
     int nEntries_diLepton = 0;
     int nEntries_singleLepton = 0;
     std::cout << std::endl;
-    for(int i=0; i<nEntries; i++)
+    for(int i = 0; i < nEntries; ++i)
     {
+      InitOutTreeVars(treeVars);
       tree -> GetEntry(i);
       // if( i >= 10 ) break;
-      if( i%1000==0 ) std::cout << "Processing tag " << label << ", event " << i << " out of " << nEntries << "\r" << std::flush;
+      if( i%1000 == 0 ) std::cout << ">>> Reading entry " << std::setw(8) << i << " / " << std::setw(8) << nEntries
+                                  << " (" << std::fixed << std::setprecision(1) << std::setw(5) << 100.*i/nEntries << "\%)" << "\r" << std::flush;
+      
       
       // common cuts
       if( treeVars.dipho_mass < 100 || treeVars.dipho_mass > 180 ) continue;
-      if( type == -1 && treeVars.dipho_mass > 115 && treeVars.dipho_mass < 135 ) continue;
-      
-      int nJets = 0;
-      for(int jIndex=0; jIndex<6; jIndex++)
-        if(treeVars.jet_pt[jIndex]>25. && abs(treeVars.jet_eta[jIndex])<2.4)
-          ++nJets;
-      
-      if( nJets < 1 ) continue;
+      // if( type == -1 && treeVars.dipho_mass > 115 && treeVars.dipho_mass < 135 ) continue;
       
       ++nEntries_commonCuts;
+      outTree_commonCuts -> Fill();
       
-      outTree_1jet -> Fill();
       
-      bool passCutBased = CutBasedSelection(treeVars,0.33,0.25,0.0,0.0,3.15,3.);
-      
-      // fill event counters - cut based
-        if( type == 1 )
-          nEvents_cutBased["bkg"][0.] += treeVars.weight;
-        if( type == 2 && label == "ttH" )
-          nEvents_cutBased["sig"][0.] += treeVars.weight;
-      if( passCutBased )
-      {
-        if( type == 1 )
-          nEvents_cutBased["bkg"][1.] += treeVars.weight;
-        if( type == 2 && label == "ttH" )
-          nEvents_cutBased["sig"][1.] += treeVars.weight;
-      }
-      
-      // fill event counters - mva
-      for(float mvaCut = -1.; mvaCut < 1.; mvaCut+=0.025)
-      {
-        if( treeVars.dipho_mva > mvaCut )
-        {
-          if( type == 1 )
-            nEvents_mvaCut["bkg"][mvaCut] += treeVars.weight;
-          if( type == 2 && label == "ttH" )
-            nEvents_mvaCut["sig"][mvaCut] += treeVars.weight;
-        }
-        
-        if( treeVars.dipho_mva_training2017_v1 > mvaCut )
-        {
-          if( type == 1 )
-            nEvents_mvaCut_new["bkg"][mvaCut] += treeVars.weight;
-          if( type == 2 && label == "ttH" )
-            nEvents_mvaCut_new["sig"][mvaCut] += treeVars.weight;
-        }
-      }
-      
-      if( treeVars.dipho_mva < diphoMVAMin ) continue;
-      
-      ++nEntries_diphoMVACut;
-            
+      // ttH lep preselection cuts
+      bool passCutBased = CutBasedSelection(treeVars,0.333,0.25,-0.2,-0.2,3.15,3.);
       if( cutBased && !passCutBased ) continue;
       
+      int nJets = 0;
+      int nJets_bTagLoose  = 0;
+      int nJets_bTagMedium = 0;
+      int nJets_bTagTight  = 0;
+      for(int jIndex = 0; jIndex < nJet; ++jIndex)
+        if(treeVars.jet_pt[jIndex] > 25. && abs(treeVars.jet_eta[jIndex]) < 2.4 )
+        {
+          ++nJets;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nJets_bTagLoose;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nJets_bTagMedium;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nJets_bTagTight;
+        }
       
-      // if( treeVars.event == 324559 )
+      if( type != -2 && nJets_bTagMedium < 1 ) continue;
+      outTree_1bJet_phoIDMin -> Fill();
+
+      std::vector<int>* goodMu = new std::vector<int>;
+      std::vector<int>* goodEle = new std::vector<int>;
+      std::vector<int>* goodJet = new std::vector<int>;
+      bool passSingleLepton = SingleLeptonSelection(treeVars,type,1,25.,1,1,0,csType,false,goodMu,goodEle,goodJet);
+      
+      std::vector<float> bTags;
+      for(unsigned int jj = 0; jj < goodJet->size(); ++jj)
+        treeVars.jet_bdiscriminant[goodJet->at(jj)] >= 0. ? bTags.push_back(treeVars.jet_bdiscriminant[goodJet->at(jj)]) : bTags.push_back(-1.);
+      std::sort(bTags.begin(),bTags.end(),std::greater<float>());
+      
+      if( !passSingleLepton ) continue;
+      
+      if( goodMu->size() > 0 )
+      {
+        treeVars.mu1_pt  = treeVars.mu_pt[goodMu->at(0)];
+        treeVars.mu1_eta = treeVars.mu_eta[goodMu->at(0)];
+      }
+      if( goodMu->size() > 1 )
+      {
+        treeVars.mu2_pt  = treeVars.mu_pt[goodMu->at(1)];
+        treeVars.mu2_eta = treeVars.mu_eta[goodMu->at(1)];
+      }
+      if( goodEle->size() > 0 )
+      {
+        treeVars.ele1_pt  = treeVars.ele_pt[goodEle->at(0)];
+        treeVars.ele1_eta = treeVars.ele_eta[goodEle->at(0)];
+      }
+      if( goodEle->size() > 1 )
+      {
+        treeVars.ele2_pt  = treeVars.ele_pt[goodEle->at(1)];
+        treeVars.ele2_eta = treeVars.ele_eta[goodEle->at(1)];
+      }
+      if( goodJet->size() > 0 )
+      {
+        treeVars.jet1_pt  = treeVars.jet_pt[goodJet->at(0)];
+        treeVars.jet1_eta = treeVars.jet_eta[goodJet->at(0)];
+        treeVars.jet1_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(0)]);
+        treeVars.bTag1 = bTags.at(0);
+      }
+      if( goodJet->size() > 1 )
+      {
+        treeVars.jet2_pt  = treeVars.jet_pt[goodJet->at(1)];
+        treeVars.jet2_eta = treeVars.jet_eta[goodJet->at(1)];
+        treeVars.jet2_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(1)]);
+        treeVars.bTag2 = bTags.at(1);
+      }
+      if( goodJet->size() > 2 )
+      {
+        treeVars.jet3_pt  = treeVars.jet_pt[goodJet->at(2)];
+        treeVars.jet3_eta = treeVars.jet_eta[goodJet->at(2)];
+        treeVars.jet3_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(2)]);
+        treeVars.bTag3 = bTags.at(2);
+      }
+      if( goodJet->size() > 3 )
+      {
+        treeVars.jet4_pt  = treeVars.jet_pt[goodJet->at(3)];
+        treeVars.jet4_eta = treeVars.jet_eta[goodJet->at(3)];
+        treeVars.jet4_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(3)]);
+        treeVars.bTag4 = bTags.at(3);
+      }
+      
+      outTree_1bJet_phoIDMin_1lepton -> Fill();
+      
+      // // fill event counters - cut based
+      //   if( type == 1 )
+      //     nEvents_cutBased["bkg"][0.] += treeVars.weight;
+      //   if( type == 2 && label == "ttH" )
+      //     nEvents_cutBased["sig"][0.] += treeVars.weight;
+      // if( passCutBased )
       // {
-      //   std::cout << "################################" << std::endl;
-        
-      //   std::cout << ">>> photons: " << std::endl;
-        
-      //   std::cout << ">>>>>> lead:      pt: " << treeVars.dipho_leadPt << "   eta: " << treeVars.dipho_leadEta << "   phi: " << treeVars.dipho_leadPhi << std::endl;
-      //   std::cout << ">>>>>> sublead:   pt: " << treeVars.dipho_subleadPt << "   eta: " << treeVars.dipho_subleadEta << "   phi: " << treeVars.dipho_subleadPhi << std::endl;
-        
-      //   std::cout << ">>> muons: " << std::endl;
-      //   for(int jj = 0; jj < 2; ++jj)
-      //   {
-      //     std::cout << ">>>>>> jj: " << jj << "   pt: " << treeVars.mu_pt[jj] << "   eta: " << treeVars.mu_eta[jj] << "   phi: " << treeVars.mu_phi[jj];
-      //     for(int kk = 0; kk < 2; ++kk)
-      //       std::cout << "   IDVector[" << kk << "]: " << treeVars.mu_IDVector[jj][kk];
-      //     std::cout << std::endl;
-      //   }
-        
-      //   std::cout << ">>> electrons: " << std::endl;
-      //   for(int jj = 0; jj < 2; ++jj)
-      //   {
-      //     std::cout << ">>>>>> jj: " << jj << "   pt: " << treeVars.ele_pt[jj] << "   eta: " << treeVars.ele_eta[jj] << "   phi: " << treeVars.ele_phi[jj];
-      //     for(int kk = 0; kk < 10; ++kk)
-      //       std::cout << "   IDVector[" << kk << "]: " << treeVars.ele_IDVector[jj][kk];
-      //     std::cout << std::endl;
-      //   }
-      //   std::cout << "################################" << std::endl;
+      //   if( type == 1 )
+      //     nEvents_cutBased["bkg"][1.] += treeVars.weight;
+      //   if( type == 2 && label == "ttH" )
+      //     nEvents_cutBased["sig"][1.] += treeVars.weight;
       // }
       
+      // // fill event counters - mva
+      // for(float mvaCut = -1.; mvaCut < 1.; mvaCut+=0.025)
+      // {
+      //   if( treeVars.dipho_mva > mvaCut )
+      //   {
+      //     if( type == 1 )
+      //       nEvents_mvaCut["bkg"][mvaCut] += treeVars.weight;
+      //     if( type == 2 && label == "ttH" )
+      //       nEvents_mvaCut["sig"][mvaCut] += treeVars.weight;
+      //   }
+        
+      //   if( treeVars.dipho_mva_training2017_v1 > mvaCut )
+      //   {
+      //     if( type == 1 )
+      //       nEvents_mvaCut_new["bkg"][mvaCut] += treeVars.weight;
+      //     if( type == 2 && label == "ttH" )
+      //       nEvents_mvaCut_new["sig"][mvaCut] += treeVars.weight;
+      //   }
+      // }
+      
+      
+      
+      
+      /*
       //-------------
       // one category
       bool bTagSelection = true;
@@ -336,11 +383,13 @@ int main(int argc, char* argv[])
         
         if( verbosity )
         {
-          std::cout << ">>> DiLeptonSelection::pass   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          std::cout << "\n\n\n>>> DiLeptonSelection::pass   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          PrintEvent(treeVars);
           DiLeptonSelection(treeVars,type,bTagSelection,cat,csType,verbosity);
           std::cout << ">>> DiLeptonSelection::selected category: " << cat << std::endl;
           std::cout << std::endl;
         }
+   
         if( type != -2 ) continue;
       } // two categories - dilepton
       else
@@ -348,6 +397,7 @@ int main(int argc, char* argv[])
         if( verbosity )
         {
           std::cout << ">>> DiLeptonSelection::fail   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          PrintEvent(treeVars);
           DiLeptonSelection(treeVars,type,bTagSelection,cat,csType,verbosity);
           std::cout << std::endl;
         }
@@ -357,7 +407,7 @@ int main(int argc, char* argv[])
       //-------------------------------
       // two categories - single lepton
       
-      if( SingleLeptonSelection(treeVars,type,bTagSelection,csType) )
+      if( SingleLeptonSelection(treeVars,type,bTagSelection,csType,false) )
       {
         ++nEntries_singleLepton;
         
@@ -373,74 +423,86 @@ int main(int argc, char* argv[])
         
         if( verbosity )
         {
-          std::cout << ">>> SingleLeptonSelection::pass   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          std::cout << "\n\n\n>>> SingleLeptonSelection::pass   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          PrintEvent(treeVars);
+          SingleLeptonSelection(treeVars,type,bTagSelection,csType,verbosity);
+          std::cout << ">>> SingleLeptonSelection::selected category: " << cat << std::endl;
+          std::cout << std::endl;
         }
       } // two categories - single lepton
-      // else
-      // {
-      //   SingleLeptonSelection(treeVars,type,bTagSelection,csType,verbosity);
-      // }
-      
+      else
+      {
+        if( verbosity )
+        {
+          std::cout << "\n\n\n>>> SingleLeptonSelection::fail   run " << treeVars.run << "   event " << treeVars.event << std::endl;
+          PrintEvent(treeVars);
+          SingleLeptonSelection(treeVars,type,bTagSelection,csType,verbosity);
+          std::cout << std::endl;
+        }
+      }
+      */
       
     } // loop over events
     
-    outTree_1jet -> AutoSave();
-    outTree_diLepton -> AutoSave();
-    outTree_singleLepton -> AutoSave();
-    outTree_oneCategory -> AutoSave();
-    outTree_diLepton_noBTag -> AutoSave();
-    outTree_singleLepton_noBTag -> AutoSave();
-    outTree_oneCategory_noBTag -> AutoSave();
+    outTree_commonCuts->AutoSave();
+    outTree_1bJet_phoIDMin->AutoSave();
+    outTree_1bJet_phoIDMin_1lepton->AutoSave();
+    outTree_diLepton->AutoSave();
+    outTree_singleLepton->AutoSave();
+    outTree_oneCategory->AutoSave();
     outFile -> Close();
     
     std::cout << "\nProcessed tag " << label << ", " << nEntries << " events out of " << nEntries << std::endl;
     std::cout << ">>> nEntries_commonCuts: "   << nEntries_commonCuts   << std::endl;
-    std::cout << ">>> nEntries_diphoMVACut: "  << nEntries_diphoMVACut  << std::endl;
     std::cout << ">>> nEntries_diLepton: "     << nEntries_diLepton     << std::endl;
     std::cout << ">>> nEntries_singleLepton: " << nEntries_singleLepton << std::endl;
   }
   
   
-  // MakePlot2(mass_oneCat_histo, "oneCategory");
-  // MakePlot2(mass_diMu_histo, "diMuon");
-  // MakePlot2(mass_diEle_histo, "diElectron");
-  // MakePlot2(mass_Mixed_histo, "mixed");
-  MakePlot2(mass_diLepton_histo, "diLepton");
-  MakePlot2(mass_singleLepton_histo, "singleLepton");
-  
-  system(Form("mkdir %s",outputPlotFolder.c_str()));
-  system(Form("cp /afs/cern.ch/user/a/abenagli/www/index.php %s",outputPlotFolder.c_str()));
-  system(Form("mv *.png %s",outputPlotFolder.c_str()));
-  system(Form("mv *.pdf %s",outputPlotFolder.c_str()));
-  
-  
-  
-  std::cout << "#########################################################################" << std::endl;
-  std::cout << "################################## ROC ##################################" << std::endl;
+  if( doPlots )
+  {
+    // MakePlot2(mass_oneCat_histo, "oneCategory");
+    // MakePlot2(mass_diMu_histo, "diMuon");
+    // MakePlot2(mass_diEle_histo, "diElectron");
+    // MakePlot2(mass_Mixed_histo, "mixed");
+    MakePlot2(mass_diLepton_histo, "diLepton");
+    MakePlot2(mass_singleLepton_histo, "singleLepton");
+    
+    system(Form("mkdir %s",outputPlotFolder.c_str()));
+    system(Form("cp /afs/cern.ch/user/a/abenagli/www/index.php %s",outputPlotFolder.c_str()));
+    system(Form("mv *.png %s",outputPlotFolder.c_str()));
+    system(Form("mv *.pdf %s",outputPlotFolder.c_str()));
+  }
   
   TFile* outFile_global = new TFile("DiLeptonStudy.root","RECREATE");
   outFile_global -> cd();
   
-  TGraph* g_ROC_cutBased = new TGraph();
-  g_ROC_cutBased -> SetPoint(g_ROC_cutBased->GetN(),nEvents_cutBased["sig"][1.]/nEvents_cutBased["sig"][0.],1.-nEvents_cutBased["bkg"][1.]/nEvents_cutBased["bkg"][0.]);
-  
-  TGraph* g_ROC_mva = new TGraph();
-  TGraph* g_ROC_mva_new = new TGraph();
-  for(float mvaCut = -1.; mvaCut < 1.; mvaCut+=0.025)
+  if( doROC )
   {
-    g_ROC_mva -> SetPoint(g_ROC_mva->GetN(),nEvents_mvaCut["sig"][mvaCut]/nEvents_mvaCut["sig"][-1.],1.-nEvents_mvaCut["bkg"][mvaCut]/nEvents_mvaCut["bkg"][-1.]);
-    g_ROC_mva_new -> SetPoint(g_ROC_mva_new->GetN(),nEvents_mvaCut_new["sig"][mvaCut]/nEvents_mvaCut_new["sig"][-1.],1.-nEvents_mvaCut_new["bkg"][mvaCut]/nEvents_mvaCut_new["bkg"][-1.]);
+    std::cout << "#########################################################################" << std::endl;
+    std::cout << "################################## ROC ##################################" << std::endl;
+    
+    TGraph* g_ROC_cutBased = new TGraph();
+    g_ROC_cutBased -> SetPoint(g_ROC_cutBased->GetN(),nEvents_cutBased["sig"][1.]/nEvents_cutBased["sig"][0.],1.-nEvents_cutBased["bkg"][1.]/nEvents_cutBased["bkg"][0.]);
+    
+    TGraph* g_ROC_mva = new TGraph();
+    TGraph* g_ROC_mva_new = new TGraph();
+    for(float mvaCut = -1.; mvaCut < 1.; mvaCut+=0.025)
+    {
+      g_ROC_mva -> SetPoint(g_ROC_mva->GetN(),nEvents_mvaCut["sig"][mvaCut]/nEvents_mvaCut["sig"][-1.],1.-nEvents_mvaCut["bkg"][mvaCut]/nEvents_mvaCut["bkg"][-1.]);
+      g_ROC_mva_new -> SetPoint(g_ROC_mva_new->GetN(),nEvents_mvaCut_new["sig"][mvaCut]/nEvents_mvaCut_new["sig"][-1.],1.-nEvents_mvaCut_new["bkg"][mvaCut]/nEvents_mvaCut_new["bkg"][-1.]);
+    }
+    
+    outFile_global -> cd();
+    
+    g_ROC_cutBased -> Write("g_ROC_cutBased");
+    g_ROC_mva -> Write("g_ROC_mva");
+    g_ROC_mva_new -> Write("g_ROC_mva_new");
+    
+    std::cout << "#########################################################################" << std::endl;
   }
   
-  outFile_global -> cd();
-  
-  g_ROC_cutBased -> Write("g_ROC_cutBased");
-  g_ROC_mva -> Write("g_ROC_mva");
-  g_ROC_mva_new -> Write("g_ROC_mva_new");
-  
-  std::cout << "#########################################################################" << std::endl;
-  
-  
+  if( !doFits ) return 0;
   
   bool doFit = 1;
   bool doSimultaneous = 0;
@@ -710,3 +772,63 @@ int main(int argc, char* argv[])
 }
 
 //  LocalWords:  endl
+
+
+
+void PrintEvent(const TreeVars& treeVars)
+{
+  std::cout << "################################ begin print event" << std::endl;
+  
+  std::cout << "run: " << treeVars.run << "   lumi: " << treeVars.lumi << "   event: " << treeVars.event << std::endl;
+  
+  std::cout << ">>> photons: " << std::endl;
+  
+  std::cout << std::fixed << std::setprecision(3);
+  std::cout << ">>>>>> lead:      pt: " << std::setw(8) << treeVars.dipho_leadPt    << "   eta: " << std::setw(8) << treeVars.dipho_leadEta    << "   phi: " << std::setw(8) << treeVars.dipho_leadPhi   << std::endl;
+  std::cout << ">>>>>> sublead:   pt: " << std::setw(8) << treeVars.dipho_subleadPt << "   eta: " << std::setw(8) << treeVars.dipho_subleadEta << "   phi: " << std::setw(8) << treeVars.dipho_subleadPhi << std::endl;
+  
+  std::cout << ">>> muons: " << std::endl;
+  for(int jj = 0; jj < 6; ++jj)
+  {
+    std::cout << ">>>>>> jj: " << jj << "   pt: " << std::setw(8) << treeVars.mu_pt[jj] << "   eta: " << std::setw(8) << treeVars.mu_eta[jj] << "   phi: " << std::setw(8) << treeVars.mu_phi[jj]
+              << "   DR_ph1: " << DeltaR(treeVars.mu_eta[jj],treeVars.mu_phi[jj],treeVars.dipho_leadEta,treeVars.dipho_leadPhi) << "   DR_ph2: " << DeltaR(treeVars.mu_eta[jj],treeVars.mu_phi[jj],treeVars.dipho_subleadEta,treeVars.dipho_subleadPhi);
+    std::cout << "   IDVector: ";
+    std::cout << std::setprecision(0);
+    for(int kk = 0; kk < 2; ++kk)
+      std::cout << std::setw(4) << treeVars.mu_IDVector[jj][kk] << ",";
+    std::cout << std::endl;
+    std::cout << std::setprecision(3);
+  }
+  
+  std::cout << ">>> electrons: " << std::endl;
+  for(int jj = 0; jj < 6; ++jj)
+  {
+    std::cout << ">>>>>> jj: " << jj << "   pt: " << std::setw(8) << treeVars.ele_pt[jj] << "   eta: " << std::setw(8) << treeVars.ele_eta[jj] << "   phi: " << std::setw(8) << treeVars.ele_phi[jj]
+              << "   DR_ph1: " << DeltaR(treeVars.ele_eta[jj],treeVars.ele_phi[jj],treeVars.dipho_leadEta,treeVars.dipho_leadPhi) << "   DR_ph2: " << DeltaR(treeVars.ele_eta[jj],treeVars.ele_phi[jj],treeVars.dipho_subleadEta,treeVars.dipho_subleadPhi);
+    
+    std::cout << "   IDVector: ";
+    std::cout << std::setprecision(0);
+    for(int kk = 0; kk < 10; ++kk)
+      std::cout << std::setw(4) << treeVars.ele_IDVector[jj][kk] << ",";
+    std::cout << std::endl;
+    std::cout << std::setprecision(3);
+  }
+  
+  std::cout << ">>> jets: " << std::endl;
+  for(int jj = 0; jj < 9; ++jj)
+  {
+    std::cout << ">>>>>> jj: " << jj << "   pt: " << std::setw(8) << treeVars.jet_pt[jj] << "   eta: " << std::setw(8) << treeVars.jet_eta[jj] << "   phi: " << std::setw(8) << treeVars.jet_phi[jj];
+    std::cout << "   bTag: ";
+    std::cout << std::setprecision(0);
+    int bTagLoose  = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdLoose  ? 1 : 0;
+    int bTagMedium = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdMedium ? 1 : 0;
+    int bTagTight  = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdTight  ? 1 : 0;
+    std::cout << std::setw(4) <<  bTagLoose  << ",";
+    std::cout << std::setw(4) <<  bTagMedium << ",";
+    std::cout << std::setw(4) <<  bTagTight  << ",";
+    std::cout << std::endl;
+    std::cout << std::setprecision(3);
+  }
+  
+  std::cout << "################################ end print event" << std::endl;
+}
