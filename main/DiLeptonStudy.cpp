@@ -243,7 +243,9 @@ int main(int argc, char* argv[])
       std::vector<int>* goodMu = new std::vector<int>;
       std::vector<int>* goodEle = new std::vector<int>;
       std::vector<int>* goodJet = new std::vector<int>;
-      bool passSingleLepton = SingleLeptonSelection(treeVars,type,1,25.,0,0,0,csType,false,goodMu,goodEle,goodJet);
+      bool passSingleLepton = false;
+      if( label != "ttgg" ) passSingleLepton = SingleLeptonSelection(treeVars,true,type,1,25.,0,0,0,csType,false,goodMu,goodEle,goodJet);
+      else                  passSingleLepton = SingleLeptonSelection(treeVars,false,type,1,25.,0,0,0,csType,false,goodMu,goodEle,goodJet);
       
       treeVars.nMuons = goodMu->size();
       treeVars.nElectrons = goodEle->size();

@@ -56,7 +56,7 @@ bool SingleEleSelections(TLorentzVector ele1, TLorentzVector ph1, TLorentzVector
 
 bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, const ControlSampleType& csType = kNull);
 bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bTagSelection, DiLeptonCategories& cat, const ControlSampleType& csType = kNull, const bool& verbosity = false);
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type,
+bool SingleLeptonSelection(const TreeVars& treeVars, const bool& useDeepBDisc, const int& type,
                            const int& nJetMin, const float& leadJetPtMin, const int& nBTagLooseJetMin, const int& nBTagMediumJetMin, const int& nBTagTightJetMin, 
                            const ControlSampleType& csType = kNull, const bool& verbosity = false,
                            std::vector<int>* goodMu = NULL, std::vector<int>* goodEle = NULL, std::vector<int>* goodJet = NULL);

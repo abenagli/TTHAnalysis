@@ -110,11 +110,11 @@ int main(int argc, char** argv)
     //-------------------------------
     // two categories - single lepton
     
-    if( SingleLeptonSelection(treeVars,-1,1,25.,1,1,0) == true )
+    if( SingleLeptonSelection(treeVars,true,-1,1,25.,1,1,0) == true )
     {
       h1_data_singleLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
-    else if( SingleLeptonSelection(treeVars,-2,1,25.,1,1,0,ControlSampleType(csType)) == true)
+    else if( SingleLeptonSelection(treeVars,true,-2,1,25.,1,1,0,ControlSampleType(csType)) == true)
     {
       h1_cs_singleLepton -> Fill(treeVars.dipho_mass, treeVars.weight);
     }
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
       outputTree_diLepton -> Fill();
     }
     
-    if( SingleLeptonSelection(treeVars,-1,1,25.,1,1,0) == false && SingleLeptonSelection(treeVars,-2,1,25.,1,1,0,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
+    if( SingleLeptonSelection(treeVars,true,-1,1,25.,1,1,0) == false && SingleLeptonSelection(treeVars,true,-2,1,25.,1,1,0,ControlSampleType(csType)) == true && treeVars.dipho_mass >= 100. && treeVars.dipho_mass < 180. )
     {
       treeVars.weight = oldWeight * scaleFactor_singleLepton;
       outputTree_singleLepton -> Fill();

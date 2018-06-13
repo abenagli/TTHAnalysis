@@ -477,9 +477,9 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool&
       if( treeVars.jet_pt[jIndex] > 25. && fabs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
         ++njet;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nbjet_loose;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nbjet_medium;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nbjet_tight;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseDeep  ) ++nbjet_loose;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumDeep ) ++nbjet_medium;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightDeep  ) ++nbjet_tight;
         
         if( treeVars.jet_pt[jIndex] > jetPtMax ) jetPtMax = treeVars.jet_pt[jIndex];
       }
@@ -574,9 +574,9 @@ bool OneCategorySelection(const TreeVars& treeVars, const int& type, const bool&
         if( DR < 0.4 ) continue;
         
         ++njet;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nbjet_loose;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nbjet_medium;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nbjet_tight;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseDeep  ) ++nbjet_loose;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumDeep ) ++nbjet_medium;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightDeep  ) ++nbjet_tight;
         
         if( treeVars.jet_pt[jIndex] > jetPtMax ) jetPtMax = treeVars.jet_pt[jIndex];
       }
@@ -620,9 +620,9 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
       if( treeVars.jet_pt[jIndex] > 25. && fabs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
         ++njet;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nbjet_loose;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nbjet_medium;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nbjet_tight;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseDeep  ) ++nbjet_loose;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumDeep ) ++nbjet_medium;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightDeep  ) ++nbjet_tight;
         
         if( treeVars.jet_pt[jIndex] > jetPtMax ) jetPtMax = treeVars.jet_pt[jIndex];
       }
@@ -771,9 +771,9 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
         
         ++njet;
         
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nbjet_loose;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nbjet_medium;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nbjet_tight;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseDeep  ) ++nbjet_loose;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumDeep ) ++nbjet_medium;
+        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightDeep  ) ++nbjet_tight;
         
         if( treeVars.jet_pt[jIndex] > jetPtMax ) jetPtMax = treeVars.jet_pt[jIndex];        
       }
@@ -805,7 +805,7 @@ bool DiLeptonSelection(const TreeVars& treeVars, const int& type, const bool& bT
 
 
 
-bool SingleLeptonSelection(const TreeVars& treeVars, const int& type,
+bool SingleLeptonSelection(const TreeVars& treeVars, const bool& useDeepBDisc, const int& type,
                            const int& nJetMin, const float& leadJetPtMin, const int& nBTagLooseJetMin, const int& nBTagMediumJetMin, const int& nBTagTightJetMin,
                            const ControlSampleType& csType, const bool& verbosity,
                            std::vector<int>* goodMu, std::vector<int>* goodEle, std::vector<int>* goodJet)
@@ -824,9 +824,18 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type,
       if( treeVars.jet_pt[jIndex] > 25. && fabs(treeVars.jet_eta[jIndex]) < 2.4 )
       {
         ++njet;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nbjet_loose;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nbjet_medium;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nbjet_tight;
+        if( useDeepBDisc )
+        {
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseDeep  ) ++nbjet_loose;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumDeep ) ++nbjet_medium;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightDeep  ) ++nbjet_tight;
+        }
+        else
+        {
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseCSV  ) ++nbjet_loose;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumCSV ) ++nbjet_medium;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightCSV  ) ++nbjet_tight;        
+        }
         
         if( treeVars.jet_pt[jIndex] > jetPtMax ) jetPtMax = treeVars.jet_pt[jIndex];
       }
@@ -909,9 +918,18 @@ bool SingleLeptonSelection(const TreeVars& treeVars, const int& type,
         if( DR < 0.4 ) continue;
         
         ++njet;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nbjet_loose;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nbjet_medium;
-        if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nbjet_tight;
+        if( useDeepBDisc )
+        {
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseDeep  ) ++nbjet_loose;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumDeep ) ++nbjet_medium;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightDeep  ) ++nbjet_tight;
+        }
+        else
+        {
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLooseCSV  ) ++nbjet_loose;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMediumCSV ) ++nbjet_medium;
+          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTightCSV  ) ++nbjet_tight;          
+        }
         
         if( treeVars.jet_pt[jIndex] > jetPtMax ) jetPtMax = treeVars.jet_pt[jIndex];
         
