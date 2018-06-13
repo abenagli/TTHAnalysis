@@ -185,19 +185,22 @@ int main(int argc, char* argv[])
     TChain* tree = treeIt -> second;
     int type = types[label];
     
-    InitTreeVars(tree,treeVars);
+    if( label != "ttgg" ) InitTreeVars(tree,treeVars);
+    else                  InitTreeVars(tree,treeVars,false);
     float lumiFactor = type > 0 ? lumi : 1.;
     
     TFile* outFile = TFile::Open(Form("%s/plotTree_%s.root",outputNtupleFolder.c_str(),label.c_str()),"RECREATE");
     outFile -> cd();
     TTree* outTree_commonCuts             = new TTree("plotTree_commonCuts",            "plotTree_commonCuts");
-    TTree* outTree_1bJet_phoIDMin         = new TTree("plotTree_1bJet_phoIDMin",        "plotTree_1bJet_phoIDMin");
-    TTree* outTree_1bJet_phoIDMin_1lepton = new TTree("plotTree_1bJet_phoIDMin_1lepton","plotTree_1bJet_phoIDMin_1lepton");
+    TTree* outTree_1jet_phoIDMin          = new TTree("plotTree_1jet_phoIDMin",         "plotTree_1jet_phoIDMin");
+    TTree* outTree_1jet_phoIDMin_1lepton  = new TTree("plotTree_1jet_phoIDMin_1lepton", "plotTree_1jet_phoIDMin_1lepton");
+    TTree* outTree_1bJet_phoIDMin_1lepton = new TTree("plotTree_1bJet_phoIDMin_1lepton","plotTree_1jet_phoIDMin_1lepton");
     TTree* outTree_diLepton               = new TTree("plotTree_diLepton",              "plotTree_diLepton");
     TTree* outTree_singleLepton           = new TTree("plotTree_singleLepton",          "plotTree_singleLepton");
     TTree* outTree_oneCategory            = new TTree("plotTree_oneCategory",           "plotTree_oneCategory");
     InitOutTree(outTree_commonCuts,treeVars);
-    InitOutTree(outTree_1bJet_phoIDMin,treeVars);
+    InitOutTree(outTree_1jet_phoIDMin,treeVars);
+    InitOutTree(outTree_1jet_phoIDMin_1lepton,treeVars);
     InitOutTree(outTree_1bJet_phoIDMin_1lepton,treeVars);
     InitOutTree(outTree_diLepton,treeVars);
     InitOutTree(outTree_singleLepton,treeVars);
@@ -227,61 +230,95 @@ int main(int argc, char* argv[])
       
       
       // ttH lep preselection cuts
-      bool passCutBased = CutBasedSelection(treeVars,0.333,0.25,-0.2,-0.2,3.15,3.);
+      bool passCutBased = CutBasedSelection(treeVars,0.333333,0.25,-0.2,-0.2,3.15,3.);
+      
       if( cutBased && !passCutBased ) continue;
       
-      int nJets = 0;
-      int nJets_bTagLoose  = 0;
-      int nJets_bTagMedium = 0;
-      int nJets_bTagTight  = 0;
-      for(int jIndex = 0; jIndex < nJet; ++jIndex)
-        if(treeVars.jet_pt[jIndex] > 25. && abs(treeVars.jet_eta[jIndex]) < 2.4 )
-        {
-          ++nJets;
-          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdLoose  ) ++nJets_bTagLoose;
-          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdMedium ) ++nJets_bTagMedium;
-          if( treeVars.jet_bdiscriminant[jIndex] > bDiscriminantThresholdTight  ) ++nJets_bTagTight;
-        }
       
-      if( type != -2 && nJets_bTagMedium < 1 ) continue;
-      outTree_1bJet_phoIDMin -> Fill();
-
+      if( treeVars.nJets < 1 ) continue;
+      
+      outTree_1jet_phoIDMin -> Fill();
+      
+      
       std::vector<int>* goodMu = new std::vector<int>;
       std::vector<int>* goodEle = new std::vector<int>;
       std::vector<int>* goodJet = new std::vector<int>;
-      bool passSingleLepton = SingleLeptonSelection(treeVars,type,1,25.,1,1,0,csType,false,goodMu,goodEle,goodJet);
+      bool passSingleLepton = SingleLeptonSelection(treeVars,type,1,25.,0,0,0,csType,false,goodMu,goodEle,goodJet);
+      
+      treeVars.nMuons = goodMu->size();
+      treeVars.nElectrons = goodEle->size();
+      float leptonMaxPt = -999.;
+      for(unsigned int jj = 0; jj < goodMu->size(); ++jj)
+      {
+        if( treeVars.mu_pt[goodMu->at(jj)] > leptonMaxPt )
+        {
+          treeVars.lepton_leadPt  = treeVars.mu_pt[goodMu->at(jj)];
+          treeVars.lepton_leadEta = treeVars.mu_eta[goodMu->at(jj)];
+        }
+      }
+      for(unsigned int jj = 0; jj < goodEle->size(); ++jj)
+      {
+        if( treeVars.ele_pt[goodEle->at(jj)] > leptonMaxPt )
+        {
+          treeVars.lepton_leadPt  = treeVars.ele_pt[goodEle->at(jj)];
+          treeVars.lepton_leadEta = treeVars.ele_eta[goodEle->at(jj)];
+        }
+      }
+        
+      treeVars.nJets = goodJet->size();
+      treeVars.nJets_bTagLoose  = 0;
+      treeVars.nJets_bTagMedium = 0;
+      treeVars.nJets_bTagTight  = 0;
+      for(unsigned int jIndex = 0; jIndex < goodJet->size(); ++jIndex)
+      {
+        if( label != "ttgg" )
+        {
+          if( treeVars.jet_bdiscriminant[goodJet->at(jIndex)] > bDiscriminantThresholdLooseDeep  ) ++treeVars.nJets_bTagLoose;
+          if( treeVars.jet_bdiscriminant[goodJet->at(jIndex)] > bDiscriminantThresholdMediumDeep ) ++treeVars.nJets_bTagMedium;
+          if( treeVars.jet_bdiscriminant[goodJet->at(jIndex)] > bDiscriminantThresholdTightDeep  ) ++treeVars.nJets_bTagTight;
+        }
+        else
+        {
+          if( treeVars.jet_bdiscriminant[goodJet->at(jIndex)] > bDiscriminantThresholdLooseCSV  ) ++treeVars.nJets_bTagLoose;
+          if( treeVars.jet_bdiscriminant[goodJet->at(jIndex)] > bDiscriminantThresholdMediumCSV ) ++treeVars.nJets_bTagMedium;
+          if( treeVars.jet_bdiscriminant[goodJet->at(jIndex)] > bDiscriminantThresholdTightCSV  ) ++treeVars.nJets_bTagTight;
+        }
+      }
       
       std::vector<float> bTags;
       for(unsigned int jj = 0; jj < goodJet->size(); ++jj)
         treeVars.jet_bdiscriminant[goodJet->at(jj)] >= 0. ? bTags.push_back(treeVars.jet_bdiscriminant[goodJet->at(jj)]) : bTags.push_back(-1.);
       std::sort(bTags.begin(),bTags.end(),std::greater<float>());
       
-      if( !passSingleLepton ) continue;
-      
       if( goodMu->size() > 0 )
       {
         treeVars.mu1_pt  = treeVars.mu_pt[goodMu->at(0)];
         treeVars.mu1_eta = treeVars.mu_eta[goodMu->at(0)];
+        treeVars.mu1_phi = treeVars.mu_phi[goodMu->at(0)];
       }
       if( goodMu->size() > 1 )
       {
         treeVars.mu2_pt  = treeVars.mu_pt[goodMu->at(1)];
         treeVars.mu2_eta = treeVars.mu_eta[goodMu->at(1)];
+        treeVars.mu2_phi = treeVars.mu_phi[goodMu->at(1)];
       }
       if( goodEle->size() > 0 )
       {
         treeVars.ele1_pt  = treeVars.ele_pt[goodEle->at(0)];
         treeVars.ele1_eta = treeVars.ele_eta[goodEle->at(0)];
+        treeVars.ele1_phi = treeVars.ele_phi[goodEle->at(0)];
       }
       if( goodEle->size() > 1 )
       {
         treeVars.ele2_pt  = treeVars.ele_pt[goodEle->at(1)];
         treeVars.ele2_eta = treeVars.ele_eta[goodEle->at(1)];
+        treeVars.ele2_phi = treeVars.ele_phi[goodEle->at(1)];
       }
       if( goodJet->size() > 0 )
       {
         treeVars.jet1_pt  = treeVars.jet_pt[goodJet->at(0)];
         treeVars.jet1_eta = treeVars.jet_eta[goodJet->at(0)];
+        treeVars.jet1_phi = treeVars.jet_phi[goodJet->at(0)];
         treeVars.jet1_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(0)]);
         treeVars.bTag1 = bTags.at(0);
       }
@@ -289,6 +326,7 @@ int main(int argc, char* argv[])
       {
         treeVars.jet2_pt  = treeVars.jet_pt[goodJet->at(1)];
         treeVars.jet2_eta = treeVars.jet_eta[goodJet->at(1)];
+        treeVars.jet2_phi = treeVars.jet_phi[goodJet->at(1)];
         treeVars.jet2_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(1)]);
         treeVars.bTag2 = bTags.at(1);
       }
@@ -296,6 +334,7 @@ int main(int argc, char* argv[])
       {
         treeVars.jet3_pt  = treeVars.jet_pt[goodJet->at(2)];
         treeVars.jet3_eta = treeVars.jet_eta[goodJet->at(2)];
+        treeVars.jet3_phi = treeVars.jet_phi[goodJet->at(2)];
         treeVars.jet3_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(2)]);
         treeVars.bTag3 = bTags.at(2);
       }
@@ -303,9 +342,18 @@ int main(int argc, char* argv[])
       {
         treeVars.jet4_pt  = treeVars.jet_pt[goodJet->at(3)];
         treeVars.jet4_eta = treeVars.jet_eta[goodJet->at(3)];
+        treeVars.jet4_phi = treeVars.jet_phi[goodJet->at(3)];
         treeVars.jet4_bTag = std::max(float(-1.),treeVars.jet_bdiscriminant[goodJet->at(3)]);
         treeVars.bTag4 = bTags.at(3);
       }
+      
+      if( !passSingleLepton ) continue;
+      if( treeVars.nJets < 1 ) continue;
+      
+      outTree_1jet_phoIDMin_1lepton -> Fill();
+      
+      
+      if( type != -2 && treeVars.nJets_bTagMedium < 1 ) continue;
       
       outTree_1bJet_phoIDMin_1lepton -> Fill();
       
@@ -445,7 +493,8 @@ int main(int argc, char* argv[])
     } // loop over events
     
     outTree_commonCuts->AutoSave();
-    outTree_1bJet_phoIDMin->AutoSave();
+    outTree_1jet_phoIDMin->AutoSave();
+    outTree_1jet_phoIDMin_1lepton->AutoSave();
     outTree_1bJet_phoIDMin_1lepton->AutoSave();
     outTree_diLepton->AutoSave();
     outTree_singleLepton->AutoSave();
@@ -820,9 +869,9 @@ void PrintEvent(const TreeVars& treeVars)
     std::cout << ">>>>>> jj: " << jj << "   pt: " << std::setw(8) << treeVars.jet_pt[jj] << "   eta: " << std::setw(8) << treeVars.jet_eta[jj] << "   phi: " << std::setw(8) << treeVars.jet_phi[jj];
     std::cout << "   bTag: ";
     std::cout << std::setprecision(0);
-    int bTagLoose  = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdLoose  ? 1 : 0;
-    int bTagMedium = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdMedium ? 1 : 0;
-    int bTagTight  = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdTight  ? 1 : 0;
+    int bTagLoose  = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdLooseDeep  ? 1 : 0;
+    int bTagMedium = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdMediumDeep ? 1 : 0;
+    int bTagTight  = treeVars.jet_bdiscriminant[jj] > bDiscriminantThresholdTightDeep  ? 1 : 0;
     std::cout << std::setw(4) <<  bTagLoose  << ",";
     std::cout << std::setw(4) <<  bTagMedium << ",";
     std::cout << std::setw(4) <<  bTagTight  << ",";

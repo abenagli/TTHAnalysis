@@ -16,9 +16,14 @@
 #define MZ 91.187
 #define PI 3.14159265359
 
-#define bDiscriminantThresholdLoose  0.1522
-#define bDiscriminantThresholdMedium 0.4941
-#define bDiscriminantThresholdTight  0.8001
+#define bDiscriminantThresholdLooseCSV 0.5426
+#define bDiscriminantThresholdMediumCSV 0.8484
+#define bDiscriminantThresholdTightCSV 0.9535
+
+#define bDiscriminantThresholdLooseDeep  0.1522
+#define bDiscriminantThresholdMediumDeep 0.4941
+#define bDiscriminantThresholdTightDeep  0.8001
+
 
 #define oneCatMuID   1 // 0=Loose, 1=Medium, 2=tight
 #define singleMuID   1 // 0=Loose, 1=Medium, 2=tight

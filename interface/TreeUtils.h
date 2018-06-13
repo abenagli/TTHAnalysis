@@ -38,6 +38,7 @@ struct TreeVars
   float dipho_lead_sigmaEoE;
   float dipho_leadIDMVA;
   float dipho_lead_PSV;
+  float dipho_leadGenMatch;
   float dipho_subleadPt;
   float dipho_subleadEta;
   float dipho_subleadPhi;
@@ -47,6 +48,7 @@ struct TreeVars
   float dipho_sublead_sigmaEoE;
   float dipho_subleadIDMVA;
   float dipho_sublead_PSV;
+  float dipho_subleadGenMatch;
   float dipho_mva;
   float dipho_mva_training2016_best;
   float dipho_mva_training2017_v1;
@@ -54,7 +56,6 @@ struct TreeVars
   
   float MetPt;
   float MetPhi;
-  float ttHMVA;
   
   float nJets;
   float nJets_bTagLoose;
@@ -94,25 +95,38 @@ struct TreeVars
   float ele_dEtaTrk[nLep];
   float ele_dPhiTrk[nLep];
   
+  float nElectrons;
+  float nMuons;
+  float lepton_leadPt;
+  float lepton_leadEta;
+  
   float mu1_pt;
   float mu1_eta;
+  float mu1_phi;
   float mu2_pt;
   float mu2_eta;
+  float mu2_phi;
   float ele1_pt;
   float ele1_eta;
+  float ele1_phi;
   float ele2_pt;
   float ele2_eta;
+  float ele2_phi;
   float jet1_pt;
   float jet1_eta;
+  float jet1_phi;
   float jet1_bTag;
   float jet2_pt;
   float jet2_eta;
+  float jet2_phi;
   float jet2_bTag;
   float jet3_pt;
   float jet3_eta;
+  float jet3_phi;
   float jet3_bTag;
   float jet4_pt;
   float jet4_eta;
+  float jet4_phi;
   float jet4_bTag;
   float bTag1;
   float bTag2;
@@ -120,7 +134,7 @@ struct TreeVars
   float bTag4;
 };
   
-void InitTreeVars(TChain* chain, TreeVars& treeVars);
+void InitTreeVars(TChain* chain, TreeVars& treeVars, const bool& useDeepBDisc = true);
 void InitOutTree(TTree* tree, TreeVars& treeVars);
 void InitOutTreeVars(TreeVars& treeVars);
 
